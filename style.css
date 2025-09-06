@@ -1,10 +1,10 @@
 /* === Fonts === */
-@import url('https://fonts.googleapis.com/css2?family=Barlow:wght@400;600;700&family=Barlow+Condensed:wght@300;400;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Sansation:wght@300;400;700&display=swap');
 
 /* Reset basic body style */
 body {
   margin: 0;
-  font-family: "Barlow Condensed", sans-serif;
+  font-family: "Sansation", sans-serif;
   background: #fff;
   color: #111;
   line-height: 1.5;
@@ -12,15 +12,16 @@ body {
 
 /* Global typography */
 h1, h2, h3, h4, h5, h6,
+.brand-name,
 .category-links a {
-  font-family: "Barlow Condensed", sans-serif;
+  font-family: "Sansation", sans-serif;
   font-weight: 400;
   color: #111;
   letter-spacing: 0.5px;
 }
 
 p, li {
-  font-family: "Barlow Condensed", sans-serif;
+  font-family: "Sansation", sans-serif;
   font-weight: 300;
   color: #222;
 }
@@ -35,15 +36,14 @@ p, li {
 
 /* Logo bigger, no rounded corners */
 .site-header .brand img {
-  width: 180px; /* bigger logo */
+  width: 180px; /* bigger */
   height: auto;
   border-radius: 0;
 }
 
-/* Brand name: smoother, no artifacts */
+/* Brand name */
 .brand-name {
-  font-family: "Barlow", sans-serif; /* use regular Barlow for smoothness */
-  font-weight: 700;                  /* bold, solid */
+  font-weight: 700;
   margin-left: 16px;
   font-size: 1.8em;
   vertical-align: middle;
@@ -75,77 +75,4 @@ p, li {
 
 .home .intro {
   margin-top: 14vh;    /* lower on the page */
-  margin-left: 8vw;    /* pushed to the left */
-  text-align: left;
-  max-width: 720px;
-}
-
-/* Tagline under name */
-.tagline {
-  font-size: 1.2em;
-  font-weight: 400;
-  color: #222;
-  margin-bottom: 20px;
-  text-align: left;
-}
-
-/* Categories: smaller, vertical list */
-.category-links {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 8px; /* space between */
-  margin-top: 12px;
-}
-
-.category-links a {
-  font-size: 1em;
-  text-decoration: none;
-  font-weight: 400;
-}
-
-.category-links a:hover {
-  text-decoration: underline;
-  color: #444;
-}
-
-/* Sections (works, sound, contact) */
-.page.container {
-  max-width: 800px;
-  margin: auto;
-  padding: 60px 20px;
-}
-
-.page h1 {
-  margin-bottom: 20px;
-  font-weight: 600;
-}
-
-.page p.muted {
-  color: #666;
-  font-size: 0.95em;
-}
-
-/* Video embeds */
-.video-grid {
-  display: grid;
-  gap: 24px;
-}
-
-.video iframe {
-  width: 100%;
-  height: 360px;
-  border: none;
-}
-
-/* Responsive tweaks */
-@media (max-width: 720px) {
-  .home .intro {
-    margin-top: 12vh;
-    margin-left: 6vw;
-  }
-
-  .video iframe {
-    height: 220px;
-  }
-}
+  margin-left: 8vw;    /* pushed*
