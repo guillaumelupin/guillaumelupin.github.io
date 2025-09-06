@@ -51,6 +51,16 @@ p, li {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Fix link color inside brand name */
+.brand-name a {
+  color: #111;
+  text-decoration: none;
+}
+
+.brand-name a:hover {
+  color: #333; /* subtle hover effect */
+}
+
 /* Remove nav entirely */
 .site-nav {
   display: none;
