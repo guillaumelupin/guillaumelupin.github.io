@@ -1,10 +1,10 @@
 /* === Fonts === */
-@import url('https://fonts.googleapis.com/css2?family=Sansation:wght@300;400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@300;400;600&display=swap');
 
 /* Reset basic body style */
 body {
   margin: 0;
-  font-family: "Sansation", sans-serif;
+  font-family: "Barlow Condensed", sans-serif;
   background: #fff;
   color: #111;
   line-height: 1.5;
@@ -14,14 +14,14 @@ body {
 h1, h2, h3, h4, h5, h6,
 .brand-name,
 .category-links a {
-  font-family: "Sansation", sans-serif;
+  font-family: "Barlow Condensed", sans-serif;
   font-weight: 400;
   color: #111;
   letter-spacing: 0.5px;
 }
 
 p, li {
-  font-family: "Sansation", sans-serif;
+  font-family: "Barlow Condensed", sans-serif;
   font-weight: 300;
   color: #222;
 }
@@ -36,20 +36,16 @@ p, li {
 
 /* Logo bigger, no rounded corners */
 .site-header .brand img {
-  width: 180px; /* bigger */
+  width: 140px; /* bigger */
   height: auto;
   border-radius: 0;
 }
 
-/* Brand name */
 .brand-name {
-  font-weight: 700;
+  font-weight: 600;
   margin-left: 16px;
-  font-size: 1.8em;
+  font-size: 1.6em;
   vertical-align: middle;
-  color: #111;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
 }
 
 /* Remove nav entirely */
@@ -59,20 +55,4 @@ p, li {
 
 /* Footer */
 .site-footer {
-  text-align: center;
-  padding: 40px 0;
-  font-size: 14px;
-  color: #666;
-}
-
-/* Homepage hero */
-.home .hero {
-  min-height: calc(100vh - 120px);
-  display: grid;
-  place-items: start;
-  padding: 40px 24px 80px;
-}
-
-.home .intro {
-  margin-top: 14vh;    /* lower on the page */
-  margin-left: 8vw;    /* pushed*
+  text-
