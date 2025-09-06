@@ -42,11 +42,16 @@ p, li {
 }
 
 .brand-name {
+  font-family: "Barlow Condensed", sans-serif;
   font-weight: 600;
+  font-size: 1.8em;     /* slightly bigger = cleaner */
   margin-left: 16px;
-  font-size: 1.6em;
   vertical-align: middle;
+  letter-spacing: normal; /* remove extra spacing */
+  -webkit-font-smoothing: antialiased; /* smooth edges */
+  -moz-osx-font-smoothing: grayscale;
 }
+
 
 /* Remove nav entirely */
 .site-nav {
