@@ -1,3 +1,81 @@
+/* === Gritty / Pixel fonts === */
+@import url('https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;600&family=Press+Start+2P&display=swap');
+
+/* Apply gritty font to brand + nav */
+.brand-name,
+.site-nav a{
+  font-family: "Pixelify Sans", system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+  letter-spacing: 0.2px;
+  font-weight: 600;
+}
+
+/* Make the logo bigger (applies site-wide) */
+.site-header .brand img{
+  width: 96px;       /* was 40px */
+  height: auto;
+  border-radius: 12px;
+}
+
+/* Tweak header spacing so bigger logo looks good */
+.site-header{
+  padding: 16px 24px;
+}
+
+/* --- Homepage category layout: smaller, lower, left, column --- */
+.home .hero{
+  min-height: calc(100vh - 120px);
+  display: grid;
+  place-items: start;               /* stop hard centering */
+  padding: 40px 24px 80px;
+}
+
+.home .intro{
+  margin-top: 14vh;                 /* push content lower */
+  margin-left: 12vw;                /* move inward from left edge */
+  text-align: left;                 /* left-align text */
+  max-width: 720px;
+}
+
+/* Keep the descriptive line subtle */
+.tagline{
+  text-align: left;
+  margin: 0 0 16px;
+  color: #222;
+}
+
+/* Stack the category links in a column, left aligned */
+.category-links{
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+/* Slightly pixelized, darker, smaller */
+.category-links a{
+  font-family: "Press Start 2P", "Pixelify Sans", cursive;
+  font-size: clamp(18px, 2.2vw, 28px);  /* reduced size */
+  color: #111;                           /* darker */
+  text-decoration: none;
+  line-height: 1.2;
+}
+
+.category-links a:hover{ text-decoration: underline; }
+
+/* Make nav a touch more readable on small screens */
+.site-nav a{
+  font-size: clamp(12px, 1.2vw, 16px);
+  text-underline-offset: 4px;
+}
+
+/* Mobile tweaks */
+@media (max-width: 720px){
+  .home .intro{
+    margin-top: 12vh;
+    margin-left: 8vw;
+  }
+}
 /* ---------- Base ---------- */
 :root{
   --bg: #ffffff;
