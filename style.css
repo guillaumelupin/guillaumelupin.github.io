@@ -25,7 +25,7 @@ p, li {
   color: #222;
 }
 
-/* Header */
+/* === Header === */
 .site-header {
   display: flex;
   justify-content: flex-start; /* align left since nav is gone */
@@ -40,7 +40,7 @@ p, li {
   border-radius: 0;
 }
 
-/* Brand name uses smoother Barlow (not condensed) */
+/* Brand name text */
 .brand-name {
   font-family: "Barlow", sans-serif; 
   font-weight: 600;
@@ -51,17 +51,17 @@ p, li {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Fix link color inside brand name */
-.brand-name a {
+/* Force brand link (logo + name) to appear black, not purple/blue */
+a.brand {
   color: #111;
   text-decoration: none;
 }
 
-.brand-name a:hover {
-  color: #333; /* subtle hover effect */
+a.brand:hover {
+  color: #333; /* optional subtle hover effect */
 }
 
-/* Remove nav entirely */
+/* Remove nav entirely (you can delete this if you bring nav back later) */
 .site-nav {
   display: none;
 }
