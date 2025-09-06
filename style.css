@@ -1,10 +1,10 @@
 /* === Fonts === */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Share+Tech+Mono&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@300;400;600&display=swap');
 
 /* Reset basic body style */
 body {
   margin: 0;
-  font-family: "Inter", sans-serif;
+  font-family: "Barlow Condensed", sans-serif;
   background: #fff;
   color: #111;
   line-height: 1.5;
@@ -13,55 +13,44 @@ body {
 /* Global typography */
 h1, h2, h3, h4, h5, h6,
 .brand-name,
-.site-nav a,
 .category-links a {
-  font-family: "Share Tech Mono", monospace;
+  font-family: "Barlow Condensed", sans-serif;
   font-weight: 400;
   color: #111;
   letter-spacing: 0.5px;
 }
 
 p, li {
-  font-family: "Inter", sans-serif;
+  font-family: "Barlow Condensed", sans-serif;
+  font-weight: 300;
   color: #222;
 }
 
 /* Header */
 .site-header {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-start; /* align left since nav is gone */
   align-items: center;
   padding: 16px 24px;
 }
 
 /* Logo bigger, no rounded corners */
 .site-header .brand img {
-  width: 96px;
+  width: 140px; /* bigger */
   height: auto;
   border-radius: 0;
 }
 
 .brand-name {
   font-weight: 600;
-  margin-left: 12px;
-  font-size: 1.2em;
+  margin-left: 16px;
+  font-size: 1.6em;
   vertical-align: middle;
 }
 
-/* Nav */
-.site-nav a {
-  font-size: 0.95em;
-  margin-left: 20px;
-  text-decoration: none;
-  transition: color 0.2s;
-}
-
-.site-nav a:hover {
-  color: #444;
-}
-
-.site-nav a.active {
-  text-decoration: underline;
+/* Remove nav entirely */
+.site-nav {
+  display: none;
 }
 
 /* Footer */
@@ -89,8 +78,8 @@ p, li {
 
 /* Tagline under name */
 .tagline {
-  font-family: "Inter", sans-serif;
   font-size: 1.2em;
+  font-weight: 400;
   color: #222;
   margin-bottom: 20px;
   text-align: left;
@@ -106,8 +95,9 @@ p, li {
 }
 
 .category-links a {
-  font-size: 0.9em;
+  font-size: 1em;
   text-decoration: none;
+  font-weight: 400;
 }
 
 .category-links a:hover {
@@ -124,6 +114,7 @@ p, li {
 
 .page h1 {
   margin-bottom: 20px;
+  font-weight: 600;
 }
 
 .page p.muted {
@@ -150,13 +141,7 @@ p, li {
     margin-left: 6vw;
   }
 
-  .site-nav a {
-    margin-left: 12px;
-    font-size: 0.9em;
-  }
-
   .video iframe {
     height: 220px;
   }
 }
-
