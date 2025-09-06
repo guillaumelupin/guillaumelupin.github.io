@@ -1,0 +1,160 @@
+/* ---------- Base ---------- */
+:root{
+  --bg: #ffffff;
+  --fg: #111111;
+  --muted: #6b7280; /* gray-500 */
+  --max-w: 1100px;
+}
+
+* { box-sizing: border-box; }
+
+html, body { height: 100%; }
+
+body{
+  margin: 0;
+  color: var(--fg);
+  background: var(--bg);
+  font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol", sans-serif;
+  line-height: 1.6;
+}
+
+a{ color: inherit; text-decoration: none; }
+a:hover{ text-decoration: underline; }
+
+img{ max-width: 100%; height: auto; display: block; }
+
+/* ---------- Layout helpers ---------- */
+.container{ max-width: var(--max-w); margin: 0 auto; padding: 24px; }
+.muted{ color: var(--muted); }
+
+/* ---------- Header / Nav ---------- */
+.site-header{
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 24px;
+  backdrop-filter: saturate(1.2) blur(6px);
+  background: color-mix(in sRGB, var(--bg) 85%, transparent);
+}
+
+.site-header.solid{
+  background: var(--bg); /* solid on subpages */
+  backdrop-filter: none;
+}
+
+.brand{
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.brand img{
+  width: 40px; height: 40px; object-fit: cover; border-radius: 8px;
+}
+
+.brand-name{
+  font-weight: 600;
+  letter-spacing: 0.2px;
+}
+
+.site-nav{
+  display: inline-flex; gap: 22px; align-items: center;
+}
+
+.site-nav a{
+  font-weight: 500;
+  letter-spacing: 0.3px;
+  text-underline-offset: 4px;
+}
+
+.site-nav a.active{
+  text-decoration: underline;
+}
+
+/* ---------- Home / Hero ---------- */
+.home .hero{
+  min-height: calc(100vh - 72px);
+  display: grid;
+  place-items: center;
+  padding: 40px 24px 80px;
+}
+
+.tagline{
+  margin: 0 0 28px;
+  font-weight: 400;
+  font-size: clamp(20px, 1.6vw + 12px, 28px);
+  color: var(--muted);
+  text-align: center;
+}
+
+.category-links{
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0,1fr));
+  gap: clamp(16px, 2vw, 32px);
+  align-items: center;
+  justify-items: center;
+}
+
+.category-links a{
+  font-size: clamp(28px, 4vw + 8px, 56px);
+  font-weight: 500;
+  line-height: 1.1;
+  text-decoration: none;        /* plain text look (no circles) */
+}
+
+.category-links a:hover{
+  text-decoration: underline;   /* subtle hover */
+}
+
+/* ---------- Pages ---------- */
+.page h1{
+  margin: 16px 0 8px;
+  font-size: clamp(28px, 3vw + 8px, 40px);
+  font-weight: 600;
+}
+
+/* Responsive 16:9 video embeds */
+.video-grid{
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+  margin-top: 28px;
+}
+
+.video{
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;      /* modern browsers */
+  background: #f3f4f6;
+  overflow: hidden;
+  border-radius: 12px;
+}
+
+.video iframe{
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+/* Audio embeds spacing */
+.audio-embed, .audio-local{ margin-top: 24px; }
+
+/* ---------- Footer ---------- */
+.site-footer{
+  padding: 48px 24px;
+  text-align: center;
+  color: var(--muted);
+  border-top: 1px solid #eee;
+}
+
+/* ---------- Small screens ---------- */
+@media (max-width: 720px){
+  .site-nav{ gap: 16px; }
+  .brand-name{ display: none; }  /* keep logo only on small screens */
+  .category-links{ grid-template-columns: 1fr; }
+}
