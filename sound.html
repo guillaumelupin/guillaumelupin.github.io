@@ -3,13 +3,33 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Sound — Guillaume Lupin</title>
+  <title>Sounds — Guillaume Lupin</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
 
   <link rel="stylesheet" href="style.css" />
+
+  <style>
+    .bandcamp-player,
+    .soundcloud-player {
+      max-width: 700px; /* keeps players from stretching too wide on desktop */
+      margin: 0 auto 2rem auto; /* center + spacing */
+      text-align: center;
+    }
+    .bandcamp-player iframe,
+    .soundcloud-player iframe {
+      width: 100%; /* responsive */
+    }
+    .bandcamp-player .caption,
+    .soundcloud-player .caption {
+      margin-top: 0.5rem;
+      font-size: 0.95rem;
+      font-weight: 500;
+      color: #444;
+    }
+  </style>
 </head>
 <body>
   <header class="site-header solid">
@@ -17,23 +37,35 @@
       <img src="IMG-20220504-WA0004.jpg" alt="Logo" />
       <span class="brand-name">Guillaume Lupin</span>
     </a>
-   <nav class="site-nav">
-  <a href="works.html">Selected Works</a>
-  <a href="sound.html">Sounds</a>
-  <a href="contact.html">Contact</a>
-</nav>
+    <nav class="site-nav">
+      <a href="works.html">Selected Works</a>
+      <a href="sound.html">Sounds</a>
+      <a href="contact.html">Contact</a>
+    </nav>
   </header>
 
   <main class="page container">
     <h1>Sounds</h1>
     <p class="muted"></p>
 
-    <!-- SoundCloud: Use SoundCloud > Share > Embed and paste the iframe below -->
-    <div class="audio-embed">
+    <!-- Bandcamp Album -->
+    <div class="bandcamp-player">
+      <iframe 
+        style="border:0; width:100%; height:120px;" 
+        src="https://bandcamp.com/EmbeddedPlayer/album=2494110284/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/artwork=small/transparent=true/" 
+        seamless>
+          <a href="https://lupingreen.bandcamp.com/album/sole-witness">Sole Witness by lupingreen</a>
+      </iframe>
+      <div class="caption">Sole Witness — lupingreen</div>
+    </div>
+
+    <!-- Example SoundCloud Embed -->
+    <div class="soundcloud-player">
       <iframe
         width="100%" height="166" scrolling="no" frameborder="no" allow="autoplay"
         src="https://w.soundcloud.com/player/?url=https%3A//api.soundcloud.com/tracks/TRACK_ID">
       </iframe>
+      <div class="caption">Track Title — Artist Name</div>
     </div>
   </main>
 
