@@ -54,13 +54,16 @@
       top: 0; left: 0;
       width: 100%;
       height: 100%;
-      transform: scale(1.25); /* stronger zoom to kill black bars */
-      transform-origin: center;
     }
     /* On larger screens, keep Shorts narrow like a phone */
     @media (min-width: 768px) {
       .video-9x16 {
         max-width: 300px; /* slimmer on desktop */
+      }
+      .video-9x16 + .caption {
+        max-width: 300px;
+        margin-left: auto;
+        margin-right: auto;
       }
     }
 
@@ -103,7 +106,7 @@
       <div class="caption">Starbucks Stand x BEAMS</div>
     </div>
 
-    <!-- Video 2 (9:16 Shorts) -->
+    <!-- Video 2 (9:16 Shorts, narrower on desktop, caption aligned) -->
     <div class="video">
       <div class="video-9x16">
         <iframe
