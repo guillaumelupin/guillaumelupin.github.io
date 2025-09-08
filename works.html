@@ -12,18 +12,19 @@
   <link rel="stylesheet" href="style.css" />
 
   <style>
-    /* Responsive video containers */
+    /* Video wrapper */
     .video {
       margin-bottom: 2rem;
       text-align: center;
     }
+
+    /* Common iframe styles */
     .video iframe {
-      width: 100%;
-      height: 100%;
       border: 0;
       border-radius: 12px;
       box-shadow: 0 4px 12px rgba(0,0,0,0.15);
     }
+
     /* 16:9 ratio */
     .video-16x9 {
       position: relative;
@@ -37,7 +38,8 @@
       width: 100%;
       height: 100%;
     }
-    /* 9:16 ratio (shorts) */
+
+    /* 9:16 ratio (Shorts) */
     .video-9x16 {
       position: relative;
       padding-bottom: 177.78%; /* 9:16 */
@@ -45,19 +47,24 @@
       overflow: hidden;
       margin: 0 auto;
       max-width: 100%; /* full width on small screens */
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
     }
     .video-9x16 iframe {
       position: absolute;
       top: 0; left: 0;
       width: 100%;
       height: 100%;
+      transform: scale(1.05); /* zoom to hide black borders */
+      transform-origin: center;
     }
-    /* On larger screens, make vertical video phone-sized */
+    /* On larger screens, shrink Shorts to phone-like width */
     @media (min-width: 768px) {
       .video-9x16 {
-        max-width: 320px; /* phone width */
+        max-width: 320px;
       }
     }
+
     /* Captions */
     .caption {
       margin-top: 0.5rem;
