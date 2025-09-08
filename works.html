@@ -10,6 +10,56 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
 
   <link rel="stylesheet" href="style.css" />
+
+  <style>
+    /* Responsive video containers */
+    .video {
+      margin-bottom: 2rem;
+      text-align: center;
+    }
+    .video iframe {
+      width: 100%;
+      height: 100%;
+      border: 0;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    /* 16:9 ratio */
+    .video-16x9 {
+      position: relative;
+      padding-bottom: 56.25%; /* 16:9 */
+      height: 0;
+      overflow: hidden;
+    }
+    .video-16x9 iframe {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%;
+      height: 100%;
+    }
+    /* 9:16 ratio (shorts) */
+    .video-9x16 {
+      position: relative;
+      padding-bottom: 177.78%; /* 9:16 */
+      height: 0;
+      overflow: hidden;
+      max-width: 400px; /* keeps vertical video from being too huge */
+      margin: 0 auto;
+    }
+    .video-9x16 iframe {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%;
+      height: 100%;
+    }
+    /* Captions */
+    .caption {
+      margin-top: 0.5rem;
+      font-size: 0.95rem;
+      font-weight: 500;
+      color: #444;
+    }
+  </style>
 </head>
 <body>
   <header class="site-header solid">
@@ -17,27 +67,53 @@
       <img src="IMG-20220504-WA0004.jpg" alt="Logo" />
       <span class="brand-name">Guillaume Lupin</span>
     </a>
-   <nav class="site-nav">
-  <a href="works.html">Selected Works</a>
-  <a href="sound.html">Sounds</a>
-  <a href="contact.html">Contact</a>
-</nav>
+    <nav class="site-nav">
+      <a href="works.html">Selected Works</a>
+      <a href="sound.html">Sounds</a>
+      <a href="contact.html">Contact</a>
+    </nav>
   </header>
 
   <main class="page container">
     <h1>Selected Works</h1>
     <p class="muted"></p>
 
-    <div class="video-grid">
-      <!-- Your YouTube video -->
-      <div class="video">
+    <!-- Video 1 (16:9) -->
+    <div class="video">
+      <div class="video-16x9">
         <iframe
           src="https://www.youtube.com/embed/0T6VZClBtVM"
-          title="Work by Guillaume Lupin"
+          title="Starbucks Stand x BEAMS"
           allowfullscreen
           loading="lazy"></iframe>
       </div>
+      <div class="caption">Starbucks Stand x BEAMS</div>
     </div>
+
+    <!-- Video 2 (9:16 Shorts) -->
+    <div class="video">
+      <div class="video-9x16">
+        <iframe
+          src="https://www.youtube.com/embed/aFs2K4GPg1c"
+          title="UuU.Jewel 2025 Summer Collection"
+          allowfullscreen
+          loading="lazy"></iframe>
+      </div>
+      <div class="caption">UuU.Jewel 2025 Summer Collection</div>
+    </div>
+
+    <!-- Video 3 (16:9) -->
+    <div class="video">
+      <div class="video-16x9">
+        <iframe
+          src="https://www.youtube.com/embed/_yDF6hQSYO0"
+          title="Marina Abramovic by Michel Comte"
+          allowfullscreen
+          loading="lazy"></iframe>
+      </div>
+      <div class="caption">Marina Abramovic by Michel Comte</div>
+    </div>
+
   </main>
 
   <footer class="site-footer">© 2025 Guillaume Lupin</footer>
