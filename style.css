@@ -33,16 +33,17 @@ p, li {
   padding: 16px 24px;
 }
 
-/* Logo size (desktop) */
+/* Logo size (desktop, adaptatif) */
 .site-header .brand img {
-  width: 140px; /* taille d'origine */
+  max-width: 140px; /* ne dépasse jamais 140px */
+  width: 100%;       /* s’adapte à son conteneur sur mobile */
   height: auto;
   border-radius: 0;
 }
 
 /* Brand name text */
 .brand-name {
-  font-family: "Barlow", sans-serif; 
+  font-family: "Barlow", sans-serif;
   font-weight: 600;
   font-size: 1.8em;
   margin-left: 16px;
@@ -163,17 +164,18 @@ a.brand:hover {
 @media (max-width: 768px) {
   .site-header .brand {
     display: flex;
-    align-items: center; /* aligne texte verticalement avec le logo */
+    align-items: center; /* texte aligné verticalement avec le logo */
     gap: 12px;           /* espace entre logo et texte */
   }
 
-  /* logo même taille que desktop */
+  /* Logo adaptatif, même taille desktop max */
   .site-header .brand img {
-    width: 140px;
+    max-width: 140px;
+    width: 100%;
     height: auto;
   }
 
-  /* texte sur 2 lignes */
+  /* Texte sur 2 lignes */
   .brand-name {
     display: flex;
     flex-direction: column; /* Guillaume au-dessus de Lupin */
@@ -182,12 +184,12 @@ a.brand:hover {
   }
 
   .brand-name .first-name {
-    font-size: 1.9rem;
+    font-size: 1.6rem;
     font-weight: 700;
   }
 
   .brand-name .last-name {
-    font-size: 1.7rem;
+    font-size: 1.4rem;
     font-weight: 500;
   }
 }
