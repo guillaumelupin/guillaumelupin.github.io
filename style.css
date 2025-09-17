@@ -28,14 +28,14 @@ p, li {
 /* === Header === */
 .site-header {
   display: flex;
-  justify-content: flex-start; /* align left since nav is gone */
+  justify-content: flex-start;
   align-items: center;
   padding: 16px 24px;
 }
 
-/* Logo bigger, no rounded corners */
+/* Logo size (desktop) */
 .site-header .brand img {
-  width: 140px; /* bigger */
+  width: 140px; /* taille d'origine */
   height: auto;
   border-radius: 0;
 }
@@ -51,17 +51,17 @@ p, li {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Force brand link (logo + name) to appear black, not purple/blue */
+/* Force brand link (logo + name) to appear black */
 a.brand {
   color: #111;
   text-decoration: none;
 }
 
 a.brand:hover {
-  color: #333; /* optional subtle hover effect */
+  color: #333;
 }
 
-/* Remove nav entirely (you can delete this if you bring nav back later) */
+/* Remove nav entirely */
 .site-nav {
   display: none;
 }
@@ -83,8 +83,8 @@ a.brand:hover {
 }
 
 .home .intro {
-  margin-top: 14vh;    /* lower on the page */
-  margin-left: 8vw;    /* pushed to the left */
+  margin-top: 14vh;
+  margin-left: 8vw;
   text-align: left;
   max-width: 720px;
 }
@@ -103,7 +103,7 @@ a.brand:hover {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 8px; /* space between */
+  gap: 8px;
   margin-top: 12px;
 }
 
@@ -147,7 +147,7 @@ a.brand:hover {
   border: none;
 }
 
-/* Responsive tweaks */
+/* === Responsive tweaks === */
 @media (max-width: 720px) {
   .home .intro {
     margin-top: 12vh;
@@ -157,55 +157,20 @@ a.brand:hover {
   .video iframe {
     height: 220px;
   }
-/* Correction uniquement pour mobile */
+}
+
+/* === Mobile: texte Guillaume/Lupin à côté du logo === */
 @media (max-width: 768px) {
   .site-header .brand {
     display: flex;
-    align-items: center;   /* aligne logo et texte */
-    gap: 14px; /* espace entre logo et texte */
-  }
-
-  .site-header .brand img {
-    max-height: none;  /* logo garde sa taille d’origine */
-    width: auto;
-    height: auto;
-  }
-
-  .brand-name {
-    display: flex;
-    flex-direction: column; /* met Guillaume au-dessus de Lupin */
-    font-size: 1.7rem;
-    line-height: 1.2;
-  }
-
-  .brand-name .first-name {
-    font-weight: 700;
-    font-size: 1.9rem;
-  }
-
-  .brand-name .last-name {
-    font-weight: 500;
-    font-size: 1.7rem;
-    /* Forcer la taille du logo sur mobile */
-@media (max-width: 768px) {
-  .site-header .brand img {
-    max-height: none !important; /* enlève toute limitation */
-    width: auto !important;
-    height: auto !important;
-  }
-}/* Mobile: logo grand + texte Guillaume/Lupin à côté */
-@media (max-width: 768px) {
-  .site-header .brand {
-    display: flex;
-    align-items: center; /* centre verticalement le texte par rapport au logo */
+    align-items: center; /* aligne texte verticalement avec le logo */
     gap: 12px;
   }
 
-  /* logo reprend sa taille naturelle */
+  /* logo garde exactement sa taille desktop */
   .site-header .brand img {
-    width: auto !important;
-    height: auto !important;
-    max-height: none !important;
+    width: 140px;
+    height: auto;
   }
 
   /* texte sur 2 lignes */
@@ -213,29 +178,7 @@ a.brand:hover {
     display: flex;
     flex-direction: column;
     line-height: 1.2;
-  }
-
-  .brand-name .first-name {
-    font-size: 1.9rem;
-    font-weight: 700;
-  }
-
-  .brand-name .last-name {
-    font-size: 1.7rem;
-    font-weight: 500;
-  /* Mobile: texte Guillaume/Lupin à côté du logo */
-@media (max-width: 768px) {
-  .site-header .brand {
-    display: flex;
-    align-items: center; /* aligne texte verticalement avec le logo */
-    gap: 12px;           /* espace entre logo et texte */
-  }
-
-  /* Texte sur 2 lignes */
-  .brand-name {
-    display: flex;
-    flex-direction: column;
-    line-height: 1.2;
+    margin-left: 0; /* l'espacement est déjà géré par gap */
   }
 
   .brand-name .first-name {
@@ -248,10 +191,3 @@ a.brand:hover {
     font-weight: 500;
   }
 }
-}
-}
-
-
-
-
-
