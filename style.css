@@ -193,7 +193,39 @@ a.brand:hover {
     width: auto !important;
     height: auto !important;
   }
+}/* Mobile: logo grand + texte Guillaume/Lupin à côté */
+@media (max-width: 768px) {
+  .site-header .brand {
+    display: flex;
+    align-items: center; /* centre verticalement le texte par rapport au logo */
+    gap: 12px;
+  }
+
+  /* logo reprend sa taille naturelle */
+  .site-header .brand img {
+    width: auto !important;
+    height: auto !important;
+    max-height: none !important;
+  }
+
+  /* texte sur 2 lignes */
+  .brand-name {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.2;
+  }
+
+  .brand-name .first-name {
+    font-size: 1.9rem;
+    font-weight: 700;
+  }
+
+  .brand-name .last-name {
+    font-size: 1.7rem;
+    font-weight: 500;
+  }
 }
+
 
 
 
