@@ -1,7 +1,7 @@
 /* === Fonts === */
 @import url('https://fonts.googleapis.com/css2?family=Barlow:wght@400;600&family=Barlow+Condensed:wght@300;400;600&display=swap');
 
-/* Reset basic body style */
+/* === Reset === */
 body {
   margin: 0;
   font-family: "Barlow Condensed", sans-serif;
@@ -13,24 +13,21 @@ body {
 /* === Header === */
 .site-header {
   display: flex;
-  justify-content: flex-start;
   align-items: center;
   padding: 16px 24px;
 }
 
 .site-header .brand img {
   max-width: 140px;
-  width: 100%;
   height: auto;
-  border-radius: 0;
 }
 
 .brand-name {
   font-family: "Barlow", sans-serif;
-  font-weight: 600;    /* titre principal */
+  font-weight: 600;
   font-size: 2rem;
   margin-left: 16px;
-  white-space: nowrap; /* desktop : une seule ligne */
+  white-space: nowrap; /* Desktop = une seule ligne */
 }
 
 a.brand {
@@ -38,21 +35,17 @@ a.brand {
   text-decoration: none;
 }
 
-a.brand:hover {
-  color: #333;
-}
-
 /* === Page titles === */
 .page-title {
-  font-weight: 400;      /* enlever le gras */
-  font-size: 1.4rem;     /* taille raisonnable desktop */
-  text-align: center;     /* comme avant */
+  font-size: 1.4rem;
+  font-weight: 400; /* pas de gras */
+  text-align: center;
   margin-bottom: 12px;
 }
 
-/* === Page descriptions === */
+/* === Descriptions === */
 .page-description {
-  font-size: 1em;
+  font-size: 1rem;
   font-weight: 300;
   color: #555;
   line-height: 1.4;
@@ -80,25 +73,25 @@ a.brand:hover {
     height: auto;
   }
 
-  /* Home page : texte peut passer sur 2 lignes, mais taille raisonnable */
+  /* Home page mobile : texte peut passer sur 2 lignes */
   body.home .brand-name {
     white-space: normal;
+    font-size: 1.8rem; /* un peu plus petit que desktop */
     line-height: 1.2;
-    font-size: 1.8rem;
   }
 
-  /* Autres pages : texte sur une seule ligne */
+  /* Autres pages : logo + texte restent sur 1 ligne */
   body:not(.home) .brand-name {
     white-space: nowrap;
   }
 
-  /* Titre des pages mobile : plus petit et pas gras */
+  /* Titres des pages : plus petits et pas gras */
   .page-title {
     font-size: 1.2rem;
     font-weight: 400;
   }
 
-  /* Description reste identique */
+  /* Descriptions : plus petites */
   .page-description {
     font-size: 0.95rem;
   }
