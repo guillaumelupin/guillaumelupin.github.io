@@ -22,15 +22,14 @@ body {
   max-width: 140px;
   width: 100%;
   height: auto;
-  border-radius: 0;
 }
 
 .brand-name {
   font-family: "Barlow", sans-serif;
   font-weight: 600;
-  font-size: 2rem;   /* Desktop = titre principal plus gros */
+  font-size: 2rem;
   margin-left: 16px;
-  white-space: nowrap; /* Desktop = une seule ligne */
+  white-space: nowrap; /* toujours sur une ligne */
 }
 
 a.brand {
@@ -42,9 +41,33 @@ a.brand:hover {
   color: #333;
 }
 
-/* Nav */
-.site-nav {
-  display: none; /* masqué pour l’instant */
+/* === Nav (home page) === */
+.category-links a {
+  text-decoration: none;
+  color: #111; /* noir, pas bleu/violet */
+  font-weight: 400;
+}
+
+.category-links a:hover {
+  text-decoration: underline;
+  color: #444; /* léger hover */
+}
+
+/* === Page titles === */
+.page-title {
+  font-size: 1.4rem; /* légèrement plus petit que Guillaume Lupin */
+  font-weight: 400;  /* pas gras */
+  margin-left: 24px; /* décale vers la droite */
+  margin-bottom: 12px;
+}
+
+/* === Page descriptions === */
+.page-description {
+  font-size: 1rem;
+  font-weight: 300;
+  color: #555;
+  line-height: 1.4;
+  margin-left: 24px; /* décale vers la droite comme les titres */
 }
 
 /* === Footer === */
@@ -55,66 +78,7 @@ a.brand:hover {
   color: #666;
 }
 
-/* === Homepage hero === */
-.home .hero {
-  min-height: calc(100vh - 120px);
-  display: grid;
-  place-items: start;
-  padding: 40px 24px 80px;
-}
-
-.home .intro {
-  margin-top: 14vh;
-  margin-left: 8vw;
-  text-align: left;
-  max-width: 720px;
-}
-
-/* Tagline under name */
-.tagline {
-  font-size: 1.2em;
-  font-weight: 400;
-  color: #222;
-  margin-bottom: 20px;
-  text-align: left;
-}
-
-/* Category links (home) */
-.category-links {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 8px;
-  margin-top: 12px;
-}
-
-.category-links a {
-  font-size: 1em;
-  text-decoration: none;
-  font-weight: 400;
-}
-
-.category-links a:hover {
-  text-decoration: underline;
-  color: #444;
-}
-
-/* === Page titles & descriptions === */
-.page-title {
-  font-size: 1.4rem;  /* moins que Guillaume Lupin */
-  font-weight: 400;   /* pas gras */
-  text-align: center;
-  margin-bottom: 12px;
-}
-
-.page-description {
-  font-size: 1rem;
-  font-weight: 300;
-  color: #555;
-  line-height: 1.4;
-}
-
-/* Sections / video embeds */
+/* === Selected Works: vidéos 16:9 === */
 .video-grid {
   display: grid;
   gap: 24px;
@@ -122,20 +86,15 @@ a.brand:hover {
 
 .video iframe {
   width: 100%;
-  height: 360px;
+  aspect-ratio: 16 / 9;
   border: none;
 }
 
-/* === Responsive mobile <=720px === */
-@media (max-width: 720px) {
-  .home .intro {
-    margin-top: 12vh;
-    margin-left: 6vw;
-  }
-
-  .video iframe {
-    height: 220px;
-  }
+/* === Contact page: décale les données à droite === */
+.contact-container,
+.contact-container form,
+.contact-container p {
+  padding-left: 24px; /* espace à gauche */
 }
 
 /* === Responsive mobile <=768px === */
@@ -154,7 +113,7 @@ a.brand:hover {
     height: auto;
   }
 
-  /* Home page: texte peut passer sur 2 lignes, légèrement plus petit */
+  /* Home page: texte peut passer sur 2 lignes */
   body.home .brand-name {
     white-space: normal;
     font-size: 1.8rem;
@@ -170,11 +129,25 @@ a.brand:hover {
   .page-title {
     font-size: 1.2rem;
     font-weight: 400;
+    margin-left: 12px; /* moins de décalage pour mobile */
   }
 
   /* Page descriptions: plus petites */
   .page-description {
     font-size: 0.95rem;
     font-weight: 300;
+    margin-left: 12px;
+  }
+
+  /* Category links (home) mobile */
+  .category-links a {
+    font-size: 1em;
+  }
+
+  /* Contact: données plus à droite mobile */
+  .contact-container,
+  .contact-container form,
+  .contact-container p {
+    padding-left: 12px;
   }
 }
