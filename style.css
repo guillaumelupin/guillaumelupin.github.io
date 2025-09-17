@@ -223,7 +223,32 @@ a.brand:hover {
   .brand-name .last-name {
     font-size: 1.7rem;
     font-weight: 500;
+  /* Mobile: texte Guillaume/Lupin à côté du logo */
+@media (max-width: 768px) {
+  .site-header .brand {
+    display: flex;
+    align-items: center; /* aligne texte verticalement avec le logo */
+    gap: 12px;           /* espace entre logo et texte */
   }
+
+  /* Texte sur 2 lignes */
+  .brand-name {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.2;
+  }
+
+  .brand-name .first-name {
+    font-size: 1.9rem;
+    font-weight: 700;
+  }
+
+  .brand-name .last-name {
+    font-size: 1.7rem;
+    font-weight: 500;
+  }
+}
+}
 }
 
 
