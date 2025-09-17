@@ -1,7 +1,7 @@
 /* === Fonts === */
 @import url('https://fonts.googleapis.com/css2?family=Barlow:wght@400;600&family=Barlow+Condensed:wght@300;400;600&display=swap');
 
-/* === Reset === */
+/* Reset basic body style */
 body {
   margin: 0;
   font-family: "Barlow Condensed", sans-serif;
@@ -10,67 +10,63 @@ body {
   line-height: 1.5;
 }
 
+/* Global typography */
+h1, h2, h3, h4, h5, h6,
+.category-links a {
+  font-family: "Barlow Condensed", sans-serif;
+  font-weight: 400;
+  color: #111;
+  letter-spacing: 0.5px;
+}
+
+p, li {
+  font-family: "Barlow Condensed", sans-serif;
+  font-weight: 300;
+  color: #222;
+}
+
 /* === Header === */
 .site-header {
   display: flex;
-  justify-content: flex-start;
+  justify-content: flex-start; /* align left since nav is gone */
   align-items: center;
   padding: 16px 24px;
 }
 
+/* Logo bigger, no rounded corners */
 .site-header .brand img {
-  max-width: 140px;
-  width: 100%;
+  width: 140px; /* bigger */
   height: auto;
+  border-radius: 0;
 }
 
+/* Brand name text */
 .brand-name {
-  font-family: "Barlow", sans-serif;
+  font-family: "Barlow", sans-serif; 
   font-weight: 600;
-  font-size: 2rem;
+  font-size: 1.8em;
   margin-left: 16px;
-  white-space: nowrap; /* toujours sur une ligne */
+  letter-spacing: normal;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
+/* Force brand link (logo + name) to appear black, not purple/blue */
 a.brand {
   color: #111;
   text-decoration: none;
 }
 
 a.brand:hover {
-  color: #333;
+  color: #333; /* optional subtle hover effect */
 }
 
-/* === Nav (home page) === */
-.category-links a {
-  text-decoration: none;
-  color: #111; /* noir, pas bleu/violet */
-  font-weight: 400;
+/* Remove nav entirely (you can delete this if you bring nav back later) */
+.site-nav {
+  display: none;
 }
 
-.category-links a:hover {
-  text-decoration: underline;
-  color: #444; /* léger hover */
-}
-
-/* === Page titles === */
-.page-title {
-  font-size: 1.4rem; /* légèrement plus petit que Guillaume Lupin */
-  font-weight: 400;  /* pas gras */
-  margin-left: 24px; /* décale vers la droite */
-  margin-bottom: 12px;
-}
-
-/* === Page descriptions === */
-.page-description {
-  font-size: 1rem;
-  font-weight: 300;
-  color: #555;
-  line-height: 1.4;
-  margin-left: 24px; /* décale vers la droite comme les titres */
-}
-
-/* === Footer === */
+/* Footer */
 .site-footer {
   text-align: center;
   padding: 40px 0;
@@ -78,7 +74,68 @@ a.brand:hover {
   color: #666;
 }
 
-/* === Selected Works: vidéos 16:9 === */
+/* Homepage hero */
+.home .hero {
+  min-height: calc(100vh - 120px);
+  display: grid;
+  place-items: start;
+  padding: 40px 24px 80px;
+}
+
+.home .intro {
+  margin-top: 14vh;    /* lower on the page */
+  margin-left: 8vw;    /* pushed to the left */
+  text-align: left;
+  max-width: 720px;
+}
+
+/* Tagline under name */
+.tagline {
+  font-size: 1.2em;
+  font-weight: 400;
+  color: #222;
+  margin-bottom: 20px;
+  text-align: left;
+}
+
+/* Categories: smaller, vertical list */
+.category-links {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px; /* space between */
+  margin-top: 12px;
+}
+
+.category-links a {
+  font-size: 1em;
+  text-decoration: none;
+  font-weight: 400;
+}
+
+.category-links a:hover {
+  text-decoration: underline;
+  color: #444;
+}
+
+/* Sections (works, sound, contact) */
+.page.container {
+  max-width: 800px;
+  margin: auto;
+  padding: 60px 20px;
+}
+
+.page h1 {
+  margin-bottom: 20px;
+  font-weight: 600;
+}
+
+.page p.muted {
+  color: #666;
+  font-size: 0.95em;
+}
+
+/* Video embeds */
 .video-grid {
   display: grid;
   gap: 24px;
@@ -86,68 +143,18 @@ a.brand:hover {
 
 .video iframe {
   width: 100%;
-  aspect-ratio: 16 / 9;
+  height: 360px;
   border: none;
 }
 
-/* === Contact page: décale les données à droite === */
-.contact-container,
-.contact-container form,
-.contact-container p {
-  padding-left: 24px; /* espace à gauche */
-}
-
-/* === Responsive mobile <=768px === */
-@media (max-width: 768px) {
-
-  /* Header: logo + texte alignés */
-  .site-header .brand {
-    display: flex;
-    align-items: center;
-    gap: 12px;
+/* Responsive tweaks */
+@media (max-width: 720px) {
+  .home .intro {
+    margin-top: 12vh;
+    margin-left: 6vw;
   }
 
-  .site-header .brand img {
-    max-width: 140px;
-    width: auto;
-    height: auto;
-  }
-
-  /* Home page: texte peut passer sur 2 lignes */
-  body.home .brand-name {
-    white-space: normal;
-    font-size: 1.8rem;
-    line-height: 1.2;
-  }
-
-  /* Autres pages: texte reste sur 1 ligne */
-  body:not(.home) .brand-name {
-    white-space: nowrap;
-  }
-
-  /* Page titles: plus petits et pas gras */
-  .page-title {
-    font-size: 1.2rem;
-    font-weight: 400;
-    margin-left: 12px; /* moins de décalage pour mobile */
-  }
-
-  /* Page descriptions: plus petites */
-  .page-description {
-    font-size: 0.95rem;
-    font-weight: 300;
-    margin-left: 12px;
-  }
-
-  /* Category links (home) mobile */
-  .category-links a {
-    font-size: 1em;
-  }
-
-  /* Contact: données plus à droite mobile */
-  .contact-container,
-  .contact-container form,
-  .contact-container p {
-    padding-left: 12px;
+  .video iframe {
+    height: 220px;
   }
 }
