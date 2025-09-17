@@ -186,8 +186,15 @@ a.brand:hover {
   .brand-name .last-name {
     font-weight: 500;
     font-size: 1.7rem;
+    /* Forcer la taille du logo sur mobile */
+@media (max-width: 768px) {
+  .site-header .brand img {
+    max-height: none !important; /* enlève toute limitation */
+    width: auto !important;
+    height: auto !important;
   }
 }
+
 
 
 
