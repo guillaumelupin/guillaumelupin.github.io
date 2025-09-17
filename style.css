@@ -28,40 +28,47 @@ p, li {
 /* === Header === */
 .site-header {
   display: flex;
-  justify-content: flex-start; /* align left since nav is gone */
+  justify-content: flex-start;
   align-items: center;
   padding: 16px 24px;
 }
 
 /* Logo bigger, no rounded corners */
 .site-header .brand img {
-  width: 140px; /* bigger */
+  width: 140px; /* taille similaire à avant */
   height: auto;
   border-radius: 0;
 }
 
-/* Brand name text */
+/* Brand name text — 2 lines */
 .brand-name {
-  font-family: "Barlow", sans-serif; 
+  display: flex;
+  flex-direction: column; /* empile prénom et nom */
+  font-family: "Barlow", sans-serif;
   font-weight: 600;
-  font-size: 1.8em;
+  font-size: 1.8em;       /* taille similaire à avant */
   margin-left: 16px;
   letter-spacing: normal;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Force brand link (logo + name) to appear black, not purple/blue */
+.brand-name .first-name,
+.brand-name .last-name {
+  line-height: 1.1em; /* ajuster l’espacement entre les lignes */
+}
+
+/* Force brand link (logo + name) to appear black */
 a.brand {
   color: #111;
   text-decoration: none;
 }
 
 a.brand:hover {
-  color: #333; /* optional subtle hover effect */
+  color: #333; /* optionnel */
 }
 
-/* Remove nav entirely (you can delete this if you bring nav back later) */
+/* Remove nav entirely */
 .site-nav {
   display: none;
 }
@@ -83,8 +90,8 @@ a.brand:hover {
 }
 
 .home .intro {
-  margin-top: 14vh;    /* lower on the page */
-  margin-left: 8vw;    /* pushed to the left */
+  margin-top: 14vh;
+  margin-left: 8vw;
   text-align: left;
   max-width: 720px;
 }
@@ -103,7 +110,7 @@ a.brand:hover {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 8px; /* space between */
+  gap: 8px;
   margin-top: 12px;
 }
 
@@ -128,7 +135,7 @@ a.brand:hover {
 .page h1 {
   margin-bottom: 20px;
   font-weight: 400;  /* titre non gras */
-  font-size: 1.6em;  /* taille plus petite */
+  font-size: 1.6em;  /* légèrement plus gros que précédent, moins que le main title */
 }
 
 .page p.muted {
@@ -157,5 +164,10 @@ a.brand:hover {
 
   .video iframe {
     height: 220px;
+  }
+
+  /* Optionnel : réduire un peu les titres de page sur mobile */
+  .page h1 {
+    font-size: 1.4em;
   }
 }
