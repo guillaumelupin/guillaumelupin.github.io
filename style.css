@@ -192,4 +192,26 @@ a.brand:hover {
     font-size: 1.4rem;
     font-weight: 500;
   }
+}@media (max-width: 768px) {
+  .site-header .brand {
+    display: flex;
+    align-items: center; /* texte aligné verticalement avec le logo */
+    gap: 12px;           /* espace entre logo et texte */
+  }
+
+  .site-header .brand img {
+    max-width: 140px; /* taille desktop max */
+    width: 100%;
+    height: auto;
+  }
+
+  .brand-name {
+    display: block;
+    line-height: 1.2; /* espacement entre les 2 lignes */
+    margin-left: 0;   /* espacement géré par gap */
+    font-weight: 600; /* même style pour les deux mots */
+    font-size: 1.8rem; /* taille du texte mobile */
+    text-align: left;
+  }
 }
+
