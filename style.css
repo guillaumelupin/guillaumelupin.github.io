@@ -127,7 +127,8 @@ a.brand:hover {
 
 .page h1 {
   margin-bottom: 20px;
-  font-weight: 600;
+  font-weight: 400;  /* titre non gras */
+  font-size: 1.4em;  /* taille plus petite */
 }
 
 .page p.muted {
