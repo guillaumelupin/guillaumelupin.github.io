@@ -157,4 +157,25 @@ a.brand:hover {
   .video iframe {
     height: 220px;
   }
+/* Correction uniquement pour mobile */
+@media (max-width: 768px) {
+  .site-header .brand {
+    display: flex;
+    align-items: center;   /* aligne logo + texte verticalement */
+    justify-content: flex-start; /* logo + texte alignés à gauche */
+    gap: 10px; /* espace entre logo et texte */
+  }
+
+  .site-header .brand img {
+    max-height: 40px;  /* taille du logo sur mobile */
+    height: auto;
+    width: auto;
+  }
+
+  .site-header .brand-name {
+    font-size: 1.2rem;
+    line-height: 1.2; /* pour bien centrer le texte */
+  }
 }
+
+
