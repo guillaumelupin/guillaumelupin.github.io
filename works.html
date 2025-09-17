@@ -24,44 +24,27 @@
       box-shadow: 0 4px 12px rgba(0,0,0,0.15);
     }
 
-    /* 16:9 ratio */
-    .video-16x9 {
+    /* Default = Shorts (9:16 for mobile) */
+    .video-responsive {
       position: relative;
-      padding-bottom: 56.25%; /* 16:9 */
+      padding-bottom: 177.78%; /* 9:16 */
       height: 0;
       overflow: hidden;
+      margin: 0 auto;
+      max-width: 100%;
     }
-    .video-16x9 iframe {
+    .video-responsive iframe {
       position: absolute;
       top: 0; left: 0;
       width: 100%;
       height: 100%;
     }
 
-    /* 9:16 ratio (Shorts) */
-    .video-9x16 {
-      position: relative;
-      padding-bottom: 177.78%; /* 9:16 ratio */
-      height: 0;
-      overflow: hidden;
-      margin: 0 auto;
-      max-width: 100%; /* full width on small screens */
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-      text-align: center;
-    }
-    .video-9x16 iframe {
-      position: absolute;
-      top: 0; left: 0;
-      width: 100%;
-      height: 100%;
-    }
-    /* On larger screens, keep Shorts narrow like a phone */
+    /* On larger screens = 16:9 + centré */
     @media (min-width: 768px) {
-      .video-9x16 {
-        max-width: 300px; /* slimmer on desktop */
-      }
-      .video-9x16 + .caption {
-        max-width: 300px;
+      .video-responsive {
+        padding-bottom: 56.25%; /* 16:9 */
+        max-width: 720px; /* largeur fixe */
         margin-left: auto;
         margin-right: auto;
       }
@@ -94,9 +77,9 @@
     <h1>Selected Works</h1>
     <p class="muted"></p>
 
-    <!-- Video 1 (16:9) -->
+    <!-- Video 1 -->
     <div class="video">
-      <div class="video-16x9">
+      <div class="video-responsive">
         <iframe
           src="https://www.youtube.com/embed/0T6VZClBtVM"
           title="Starbucks Stand x BEAMS"
@@ -106,9 +89,21 @@
       <div class="caption">Starbucks Stand x BEAMS</div>
     </div>
 
-    <!-- Video 2 (9:16 Shorts, narrower on desktop, caption aligned) -->
+    <!-- New Video -->
     <div class="video">
-      <div class="video-9x16">
+      <div class="video-responsive">
+        <iframe
+          src="https://www.youtube.com/embed/kTzazjke3KY"
+          title="CHRYSANTHEMUM"
+          allowfullscreen
+          loading="lazy"></iframe>
+      </div>
+      <div class="caption">CHRYSANTHEMUM</div>
+    </div>
+
+    <!-- Video 2 -->
+    <div class="video">
+      <div class="video-responsive">
         <iframe
           src="https://www.youtube.com/embed/enyA4c3Kw-U"
           title="UuU.Jewel 2025 Summer Collection"
@@ -118,9 +113,9 @@
       <div class="caption">UuU.Jewel 2025 Summer Collection</div>
     </div>
 
-    <!-- Video 3 (16:9) -->
+    <!-- Video 3 -->
     <div class="video">
-      <div class="video-16x9">
+      <div class="video-responsive">
         <iframe
           src="https://www.youtube.com/embed/_yDF6hQSYO0"
           title="Marina Abramovic by Michel Comte"
