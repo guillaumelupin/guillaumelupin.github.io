@@ -161,31 +161,32 @@ a.brand:hover {
 @media (max-width: 768px) {
   .site-header .brand {
     display: flex;
-    align-items: center;   /* aligne logo et bloc texte */
-    justify-content: flex-start;
-    gap: 12px; /* espace entre logo et texte */
+    align-items: center;   /* aligne logo et texte */
+    gap: 14px; /* espace entre logo et texte */
   }
 
   .site-header .brand img {
-    max-height: 60px; /* même taille qu'avant, ajuste si nécessaire */
-    height: auto;
+    max-height: none;  /* logo garde sa taille d’origine */
     width: auto;
+    height: auto;
   }
 
-  .site-header .brand-name {
+  .brand-name {
     display: flex;
     flex-direction: column; /* met Guillaume au-dessus de Lupin */
-    font-size: 1.5rem; /* plus gros */
+    font-size: 1.7rem;
     line-height: 1.2;
-    font-weight: 600; /* texte un peu plus marqué */
   }
 
-  .site-header .brand-name::first-line {
-    font-size: 1.6rem; /* Guillaume un poil plus gros */
+  .brand-name .first-name {
     font-weight: 700;
+    font-size: 1.9rem;
   }
-}
 
+  .brand-name .last-name {
+    font-weight: 500;
+    font-size: 1.7rem;
+  }
 }
 
 
