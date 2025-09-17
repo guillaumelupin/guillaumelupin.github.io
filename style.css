@@ -167,4 +167,13 @@ a.brand:hover {
   .page h1 {
     font-size: 1.4em;
   }
+/* Tous les liens du site */
+a {
+  color: #111;        /* couleur noire uniforme */
+  text-decoration: none; /* optionnel : supprime le soulignement par défaut */
+}
+
+a:hover {
+  color: #444;        /* couleur au survol, identique partout */
+  text-decoration: underline; /* optionnel : soulignement au hover */
 }
