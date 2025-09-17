@@ -33,10 +33,10 @@ p, li {
   padding: 16px 24px;
 }
 
-/* Logo size (desktop, adaptatif) */
+/* Logo (desktop and mobile) */
 .site-header .brand img {
-  max-width: 140px; /* ne dépasse jamais 140px */
-  width: 100%;       /* s’adapte à son conteneur sur mobile */
+  max-width: 140px; /* taille desktop max */
+  width: 100%;      /* s’adapte sur mobile si image plus petite */
   height: auto;
   border-radius: 0;
 }
@@ -48,6 +48,7 @@ p, li {
   font-size: 1.8em;
   margin-left: 16px;
   letter-spacing: normal;
+  white-space: nowrap; /* Desktop : texte sur une seule ligne */
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -160,39 +161,8 @@ a.brand:hover {
   }
 }
 
-/* === Mobile: texte Guillaume/Lupin à côté du logo === */
+/* === Mobile: logo et texte sur 2 lignes === */
 @media (max-width: 768px) {
-  .site-header .brand {
-    display: flex;
-    align-items: center; /* texte aligné verticalement avec le logo */
-    gap: 12px;           /* espace entre logo et texte */
-  }
-
-  /* Logo adaptatif, même taille desktop max */
-  .site-header .brand img {
-    max-width: 140px;
-    width: 100%;
-    height: auto;
-  }
-
-  /* Texte sur 2 lignes */
-  .brand-name {
-    display: flex;
-    flex-direction: column; /* Guillaume au-dessus de Lupin */
-    line-height: 1.2;
-    margin-left: 0; /* espacement géré par gap */
-  }
-
-  .brand-name .first-name {
-    font-size: 1.6rem;
-    font-weight: 700;
-  }
-
-  .brand-name .last-name {
-    font-size: 1.4rem;
-    font-weight: 500;
-  }
-}@media (max-width: 768px) {
   .site-header .brand {
     display: flex;
     align-items: center; /* texte aligné verticalement avec le logo */
@@ -205,13 +175,12 @@ a.brand:hover {
     height: auto;
   }
 
+  /* Texte sur 2 lignes uniquement sur mobile */
   .brand-name {
-    display: block;
-    line-height: 1.2; /* espacement entre les 2 lignes */
-    margin-left: 0;   /* espacement géré par gap */
-    font-weight: 600; /* même style pour les deux mots */
-    font-size: 1.8rem; /* taille du texte mobile */
-    text-align: left;
+    white-space: normal; /* autorise le passage à la ligne */
+    line-height: 1.2;   /* espacement entre les lignes */
+    margin-left: 0;     /* espacement géré par gap */
+    font-weight: 600;   /* même poids pour les deux mots */
+    font-size: 1.8rem;  /* même taille que desktop */
   }
 }
-
