@@ -51,7 +51,7 @@ p, li {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Force brand link (logo + name) to appear black */
+/* Force brand link color */
 a.brand {
   color: #111;
   text-decoration: none;
@@ -98,7 +98,7 @@ a.brand:hover {
   text-align: left;
 }
 
-/* Categories: smaller, vertical list */
+/* Categories: vertical list */
 .category-links {
   display: flex;
   flex-direction: column;
@@ -164,10 +164,10 @@ a.brand:hover {
   .site-header .brand {
     display: flex;
     align-items: center; /* aligne texte verticalement avec le logo */
-    gap: 12px;
+    gap: 12px;           /* espace entre logo et texte */
   }
 
-  /* logo garde exactement sa taille desktop */
+  /* logo même taille que desktop */
   .site-header .brand img {
     width: 140px;
     height: auto;
@@ -176,9 +176,9 @@ a.brand:hover {
   /* texte sur 2 lignes */
   .brand-name {
     display: flex;
-    flex-direction: column;
+    flex-direction: column; /* Guillaume au-dessus de Lupin */
     line-height: 1.2;
-    margin-left: 0; /* l'espacement est déjà géré par gap */
+    margin-left: 0; /* espacement géré par gap */
   }
 
   .brand-name .first-name {
