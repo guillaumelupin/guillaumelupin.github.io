@@ -28,35 +28,32 @@ p, li {
 /* === Header === */
 .site-header {
   display: flex;
-  justify-content: flex-start;
   align-items: center;
   padding: 16px 24px;
 }
 
-/* Logo bigger, no rounded corners */
+/* Logo */
 .site-header .brand img {
-  width: 140px; /* taille similaire à avant */
+  width: 140px;
   height: auto;
   border-radius: 0;
 }
 
-/* Brand name text — 2 lines */
+/* Brand name — 2 lignes à droite du logo */
 .brand-name {
-  display: flex;
-  flex-direction: column; /* empile prénom et nom */
+  display: inline-block;         /* reste à côté du logo */
+  margin-left: 16px;             /* espace entre logo et texte */
   font-family: "Barlow", sans-serif;
   font-weight: 600;
-  font-size: 1.8em;       /* taille similaire à avant */
-  margin-left: 16px;
-  letter-spacing: normal;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  font-size: 1.8em;
+  line-height: 1.1em;            /* pour que Guillaume et Lupin soient proches */
 }
 
 .brand-name .first-name,
 .brand-name .last-name {
-  line-height: 1.1em; /* ajuster l’espacement entre les lignes */
+  display: block;                 /* force 2 lignes */
 }
+
 
 /* Force brand link (logo + name) to appear black */
 a.brand {
