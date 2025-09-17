@@ -10,11 +10,11 @@ body {
   line-height: 1.5;
 }
 
-/* Global typography */
+/* === Typographie globale === */
 h1, h2, h3, h4, h5, h6,
 .category-links a {
   font-family: "Barlow Condensed", sans-serif;
-  font-weight: 400;
+  font-weight: 400; /* par défaut, pas de gras */
   color: #111;
   letter-spacing: 0.5px;
 }
@@ -33,39 +33,35 @@ p, li {
   padding: 16px 24px;
 }
 
-/* Logo (desktop and mobile) */
+/* Logo */
 .site-header .brand img {
   max-width: 140px; /* taille desktop max */
-  width: 100%;      /* s’adapte sur mobile si image plus petite */
+  width: 100%;
   height: auto;
   border-radius: 0;
 }
 
-/* Brand name text */
+/* Brand name */
 .brand-name {
   font-family: "Barlow", sans-serif;
-  font-weight: 600;
-  font-size: 1.8em;
+  font-weight: 600; /* légèrement plus marqué que page titles */
+  font-size: 2rem; /* plus grand que les titres de page */
   margin-left: 16px;
-  letter-spacing: normal;
-  white-space: nowrap; /* Desktop : texte sur une seule ligne */
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  white-space: nowrap; /* desktop : texte sur une seule ligne */
 }
 
-/* Force brand link color */
+/* Links style */
 a.brand {
   color: #111;
   text-decoration: none;
 }
-
 a.brand:hover {
   color: #333;
 }
 
-/* Remove nav entirely */
+/* Nav */
 .site-nav {
-  display: none;
+  display: none; /* masqué pour le moment */
 }
 
 /* Footer */
@@ -76,7 +72,7 @@ a.brand:hover {
   color: #666;
 }
 
-/* Homepage hero */
+/* === Home page hero === */
 .home .hero {
   min-height: calc(100vh - 120px);
   display: grid;
@@ -100,7 +96,7 @@ a.brand:hover {
   text-align: left;
 }
 
-/* Categories: vertical list */
+/* Category links (home) */
 .category-links {
   display: flex;
   flex-direction: column;
@@ -120,24 +116,22 @@ a.brand:hover {
   color: #444;
 }
 
-/* Sections (works, sound, contact) */
-.page.container {
-  max-width: 800px;
-  margin: auto;
-  padding: 60px 20px;
+/* === Page titles & descriptions === */
+.page-title {
+  font-size: 1.6rem;  /* plus petit que Guillaume Lupin */
+  font-weight: 400;   /* pas gras */
+  margin-bottom: 12px;
 }
 
-.page h1 {
+.page-description {
+  font-size: 1em;
+  font-weight: 300;
+  color: #555;
   margin-bottom: 20px;
-  font-weight: 600;
+  line-height: 1.4;
 }
 
-.page p.muted {
-  color: #666;
-  font-size: 0.95em;
-}
-
-/* Video embeds */
+/* Sections / video embeds */
 .video-grid {
   display: grid;
   gap: 24px;
@@ -149,7 +143,7 @@ a.brand:hover {
   border: none;
 }
 
-/* === Responsive tweaks === */
+/* Responsive tweaks */
 @media (max-width: 720px) {
   .home .intro {
     margin-top: 12vh;
@@ -161,26 +155,29 @@ a.brand:hover {
   }
 }
 
-/* === Mobile: logo et texte sur 2 lignes === */
+/* === Mobile header & home page text === */
 @media (max-width: 768px) {
   .site-header .brand {
     display: flex;
-    align-items: center; /* texte aligné verticalement avec le logo */
-    gap: 12px;           /* espace entre logo et texte */
+    align-items: center;
+    gap: 12px;
   }
 
   .site-header .brand img {
-    max-width: 140px; /* taille desktop max */
+    max-width: 140px;
     width: 100%;
     height: auto;
   }
 
-  /* Texte sur 2 lignes uniquement sur mobile */
-  .brand-name {
-    white-space: normal; /* autorise le passage à la ligne */
-    line-height: 1.2;   /* espacement entre les lignes */
-    margin-left: 0;     /* espacement géré par gap */
-    font-weight: 600;   /* même poids pour les deux mots */
-    font-size: 1.8rem;  /* même taille que desktop */
+  /* Home page only: texte sur 2 lignes */
+  body.home .brand-name {
+    white-space: normal;
+    line-height: 1.2;
+    font-size: 2rem;
+  }
+
+  /* Other pages: texte reste sur 1 ligne */
+  body:not(.home) .brand-name {
+    white-space: nowrap;
   }
 }
