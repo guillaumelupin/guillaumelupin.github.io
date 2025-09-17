@@ -18,16 +18,15 @@
       text-align: center;
     }
 
-    /* Common iframe styles */
     .video iframe {
       border: 0;
       box-shadow: 0 4px 12px rgba(0,0,0,0.15);
     }
 
-    /* Default = Shorts (9:16 for mobile) */
+    /* Par défaut = 16:9 */
     .video-responsive {
       position: relative;
-      padding-bottom: 177.78%; /* 9:16 */
+      padding-bottom: 56.25%; /* 16:9 */
       height: 0;
       overflow: hidden;
       margin: 0 auto;
@@ -40,13 +39,16 @@
       height: 100%;
     }
 
-    /* On larger screens = 16:9 + centré */
+    /* Variante Shorts : 9:16 sur mobile, 16:9 sur desktop */
+    .video-responsive.shorts {
+      padding-bottom: 177.78%; /* 9:16 sur mobile */
+    }
+
     @media (min-width: 768px) {
-      .video-responsive {
-        padding-bottom: 56.25%; /* 16:9 */
-        max-width: 720px; /* largeur fixe */
-        margin-left: auto;
-        margin-right: auto;
+      .video-responsive,
+      .video-responsive.shorts {
+        padding-bottom: 56.25%; /* repasse en 16:9 */
+        max-width: 720px; /* largeur max centrée */
       }
     }
 
@@ -101,9 +103,9 @@
       <div class="caption">CHRYSANTHEMUM</div>
     </div>
 
-    <!-- Video 2 -->
+    <!-- Video 2 (Shorts sur mobile) -->
     <div class="video">
-      <div class="video-responsive">
+      <div class="video-responsive shorts">
         <iframe
           src="https://www.youtube.com/embed/enyA4c3Kw-U"
           title="UuU.Jewel 2025 Summer Collection"
