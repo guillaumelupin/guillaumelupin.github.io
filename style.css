@@ -172,6 +172,11 @@ a {
   color: #111;        /* couleur noire uniforme */
   text-decoration: none; /* optionnel : supprime le soulignement par défaut */
 }
+body.home {
+  overflow: hidden; /* supprime la barre de scroll */
+  height: 100vh;    /* verrouille la hauteur à la taille de l’écran */
+}
+
 
 a:hover {
   color: #444;        /* couleur au survol, identique partout */
