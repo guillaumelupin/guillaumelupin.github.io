@@ -77,15 +77,27 @@ a.brand:hover {
   color: #666;
 }
 
-/* Homepage hero */
-/* === CORRECTION NO SCROLL HOMEPAGE === */
-.home .hero {
-  height: calc(100vh - 80px); /* 100% de l'écran moins padding/footer */
-  display: grid;
-  place-items: start;
-  padding: 40px 24px 80px;
+/* === HOMEPAGE NO SCROLL / FOOTER FIXED === */
+body.home {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh; /* occupe toute la hauteur de l'écran */
+  margin: 0;
 }
 
+.home .hero {
+  flex: 1 0 auto;      /* prend tout l'espace entre header et footer */
+  padding: 40px 24px 0; /* on retire le padding bottom pour éviter le scroll */
+  display: grid;
+  place-items: start;
+}
+
+body.home .site-footer {
+  flex-shrink: 0;      /* reste visible en bas */
+  padding: 40px 0;     /* conserve ton padding existant */
+}
+
+/* Homepage intro */
 .home .intro {
   margin-top: 14vh;
   margin-left: 8vw;
