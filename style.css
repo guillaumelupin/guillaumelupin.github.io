@@ -172,6 +172,20 @@ a {
   color: #111;        /* couleur noire uniforme */
   text-decoration: none; /* optionnel : supprime le soulignement par défaut */
 }
+/* === No scroll homepage === */
+body.home {
+  overflow: hidden; /* supprime la barre de scroll */
+  height: 100vh;    /* verrouille la hauteur sur l'écran */
+  margin: 0;
+  position: relative; /* nécessaire pour positionner le footer */
+}
+body.home .site-footer {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+}
+
 a:hover {
   color: #444;        /* couleur au survol, identique partout */
   text-decoration: underline; /* optionnel : soulignement au hover */
