@@ -41,19 +41,18 @@ p, li {
 
 /* Brand name — 2 lignes à droite du logo */
 .brand-name {
-  display: inline-block;         /* reste à côté du logo */
-  margin-left: 16px;             /* espace entre logo et texte */
+  display: inline-block;
+  margin-left: 16px;
   font-family: "Barlow", sans-serif;
   font-weight: 600;
   font-size: 1.8em;
-  line-height: 1.1em;            /* pour que Guillaume et Lupin soient proches */
+  line-height: 1.1em;
 }
 
 .brand-name .first-name,
 .brand-name .last-name {
-  display: block;                 /* force 2 lignes */
+  display: block;
 }
-
 
 /* Force brand link (logo + name) to appear black */
 a.brand {
@@ -62,7 +61,7 @@ a.brand {
 }
 
 a.brand:hover {
-  color: #333; /* optionnel */
+  color: #333;
 }
 
 /* Remove nav entirely */
@@ -79,8 +78,9 @@ a.brand:hover {
 }
 
 /* Homepage hero */
+/* === CORRECTION NO SCROLL HOMEPAGE === */
 .home .hero {
-  min-height: calc(100vh - 120px);
+  height: calc(100vh - 80px); /* 100% de l'écran moins padding/footer */
   display: grid;
   place-items: start;
   padding: 40px 24px 80px;
@@ -131,8 +131,8 @@ a.brand:hover {
 
 .page h1 {
   margin-bottom: 20px;
-  font-weight: 400;  /* titre non gras */
-  font-size: 1.6em;  /* légèrement plus gros que précédent, moins que le main title */
+  font-weight: 400;
+  font-size: 1.6em;
 }
 
 .page p.muted {
@@ -163,30 +163,18 @@ a.brand:hover {
     height: 220px;
   }
 
-  /* Optionnel : réduire un peu les titres de page sur mobile */
   .page h1 {
     font-size: 1.4em;
   }
+}
+
 /* Tous les liens du site */
 a {
-  color: #111;        /* couleur noire uniforme */
-  text-decoration: none; /* optionnel : supprime le soulignement par défaut */
-}
-/* === No scroll homepage === */
-body.home {
-  overflow: hidden; /* supprime la barre de scroll */
-  height: 100vh;    /* verrouille la hauteur sur l'écran */
-  margin: 0;
-  position: relative; /* nécessaire pour positionner le footer */
-}
-body.home .site-footer {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 100%;
+  color: #111;
+  text-decoration: none;
 }
 
 a:hover {
-  color: #444;        /* couleur au survol, identique partout */
-  text-decoration: underline; /* optionnel : soulignement au hover */
+  color: #444;
+  text-decoration: underline;
 }
