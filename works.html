@@ -3,150 +3,196 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+
   <title>Selected Works — Guillaume Lupin</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap"
+    rel="stylesheet"
+  >
 
   <link rel="stylesheet" href="style.css" />
 
   <style>
-    /* Video wrapper */
+    /* Ensemble vidéo + légende */
     .video {
-      margin-bottom: 2rem;
+      width: 100%;
+      max-width: 600px;
+      margin: 0 auto 3rem;
       text-align: center;
     }
 
-    .video iframe {
-      border: 0;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    }
-
-    /* Par défaut = 16:9 */
+    /* Conteneur vidéo horizontal 16:9 */
     .video-responsive {
       position: relative;
-      padding-bottom: 56.25%; /* 16:9 */
-      height: 0;
+      width: 100%;
+      aspect-ratio: 16 / 9;
       overflow: hidden;
-      margin: 0 auto;
-      max-width: 100%;
+      background: #f2f2f2;
     }
+
     .video-responsive iframe {
       position: absolute;
-      top: 0; left: 0;
+      inset: 0;
       width: 100%;
       height: 100%;
+      border: 0;
+
+      /* Ombre volontairement discrète */
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
     }
 
-    /* Variante Shorts : 9:16 sur mobile, 16:9 sur desktop */
+    /* Vidéo verticale */
+    .video.vertical {
+      max-width: 340px;
+    }
+
     .video-responsive.shorts {
-      padding-bottom: 177.78%; /* 9:16 sur mobile */
+      aspect-ratio: 9 / 16;
     }
 
-    @media (min-width: 768px) {
-      .video-responsive,
-      .video-responsive.shorts {
-        padding-bottom: 56.25%; /* repasse en 16:9 */
-        max-width: 720px; /* largeur max centrée */
-      }
-    }
-
-    /* Captions */
+    /* Légendes */
     .caption {
-      margin-top: 0.5rem;
-      font-size: 0.95rem;
-      font-weight: 500;
-      color: #444;
-      text-align: center;
+      margin-top: 0.65rem;
+      font-size: 0.85rem;
+      font-weight: 400;
+      line-height: 1.4;
+      color: #666;
+      text-align: left;
+    }
+
+    /* Mobile */
+    @media (max-width: 767px) {
+      .video {
+        max-width: 100%;
+        margin-bottom: 2.5rem;
+      }
+
+      .video.vertical {
+        max-width: min(78vw, 340px);
+      }
+
+      .caption {
+        font-size: 0.8rem;
+      }
     }
   </style>
 </head>
+
 <body>
-<header class="site-header">
-  <a href="index.html" class="brand">
-    <img src="2.png" alt="Logo" />
-    <span class="brand-name">
-      <span class="first-name">Guillaume</span>
-      <span class="last-name">Lupin</span>
-    </span>
-  </a>
 
-  <!-- Navigation cachée, peut être activée si nécessaire -->
-  <nav class="site-nav">
-    <a href="works.html">Selected Works</a>
-    <a href="sound.html">Sounds</a>
-    <a href="contact.html">Contact</a>
-  </nav>
-</header>
+  <header class="site-header">
+    <a href="index.html" class="brand">
+      <img src="2.png" alt="Guillaume Lupin logo" />
 
+      <span class="brand-name">
+        <span class="first-name">Guillaume</span>
+        <span class="last-name">Lupin</span>
+      </span>
+    </a>
+
+    <nav class="site-nav">
+      <a href="works.html">Selected Works</a>
+      <a href="sound.html">Sounds</a>
+      <a href="contact.html">Contact</a>
+    </nav>
+  </header>
 
   <main class="page container">
     <h1>Selected Works</h1>
-    <p class="muted"></p>
-    
-<!-- New Video -->
-<div class="video">
-  <div class="video-responsive">
-    <iframe
-      src="https://www.youtube.com/embed/5cnZhU9-lLY"
-      title="New Balance x Basketcase.gallery"
-      allowfullscreen
-      loading="lazy"></iframe>
-  </div>
-  <div class="caption">New Balance x Basketcase.gallery</div>
-</div>
-    
-    <!-- Video 1 -->
+
+    <!-- New Balance x Basketcase.gallery -->
+    <div class="video">
+      <div class="video-responsive">
+        <iframe
+          src="https://www.youtube.com/embed/5cnZhU9-lLY"
+          title="New Balance x Basketcase.gallery"
+          loading="lazy"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          allowfullscreen>
+        </iframe>
+      </div>
+
+      <div class="caption">
+        New Balance x Basketcase.gallery
+      </div>
+    </div>
+
+    <!-- Starbucks Stand x BEAMS -->
     <div class="video">
       <div class="video-responsive">
         <iframe
           src="https://www.youtube.com/embed/0T6VZClBtVM"
           title="Starbucks Stand x BEAMS"
-          allowfullscreen
-          loading="lazy"></iframe>
+          loading="lazy"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          allowfullscreen>
+        </iframe>
       </div>
-      <div class="caption">Starbucks Stand x BEAMS</div>
+
+      <div class="caption">
+        Starbucks Stand x BEAMS
+      </div>
     </div>
 
-    <!-- New Video -->
+    <!-- CHRYSANTHEMUM -->
     <div class="video">
       <div class="video-responsive">
         <iframe
           src="https://www.youtube.com/embed/kTzazjke3KY"
           title="CHRYSANTHEMUM"
-          allowfullscreen
-          loading="lazy"></iframe>
+          loading="lazy"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          allowfullscreen>
+        </iframe>
       </div>
-      <div class="caption">CHRYSANTHEMUM</div>
+
+      <div class="caption">
+        CHRYSANTHEMUM
+      </div>
     </div>
 
-    <!-- Video 2 (Shorts sur mobile) -->
-    <div class="video">
+    <!-- UuU.Jewel 2025 Summer Collection -->
+    <div class="video vertical">
       <div class="video-responsive shorts">
         <iframe
           src="https://www.youtube.com/embed/enyA4c3Kw-U"
           title="UuU.Jewel 2025 Summer Collection"
-          allowfullscreen
-          loading="lazy"></iframe>
+          loading="lazy"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          allowfullscreen>
+        </iframe>
       </div>
-      <div class="caption">UuU.Jewel 2025 Summer Collection</div>
+
+      <div class="caption">
+        UuU.Jewel 2025 Summer Collection
+      </div>
     </div>
 
-    <!-- Video 3 -->
+    <!-- Marina Abramovic by Michel Comte -->
     <div class="video">
       <div class="video-responsive">
         <iframe
           src="https://www.youtube.com/embed/_yDF6hQSYO0"
           title="Marina Abramovic by Michel Comte"
-          allowfullscreen
-          loading="lazy"></iframe>
+          loading="lazy"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          allowfullscreen>
+        </iframe>
       </div>
-      <div class="caption">Marina Abramovic by Michel Comte</div>
-    </div>
 
+      <div class="caption">
+        Marina Abramovic by Michel Comte
+      </div>
+    </div>
   </main>
 
-  <footer class="site-footer">© 2026 Guillaume Lupin</footer>
+  <footer class="site-footer">
+    © 2026 Guillaume Lupin
+  </footer>
+
 </body>
 </html>
