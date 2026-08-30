@@ -1,58 +1,42 @@
-```javascript
 const photo = document.getElementById("photo");
-const gallery = document.getElementById("gallery");
-const previousButton = document.querySelector(".prev");
-const nextButton = document.querySelector(".next");
+const previous = document.getElementById("previous");
+const next = document.getElementById("next");
 
-
-// YOUR PHOTOS
-const images = [
+const photos = [
   "photo-files/215403813.jpg",
   "photo-files/215542180.jpg",
   "photo-files/220347599.jpg"
 ];
 
-
-let currentIndex = -1;
-let timer = null;
-
-let touchStartX = 0;
+let current = -1;
+let timer;
 
 
 // Random number
-function randomNumber(min, max) {
+function random(min, max) {
   return Math.random() * (max - min) + min;
 }
 
 
-// Random order
-function shuffle(array) {
-  return [...array].sort(() => Math.random() - 0.5);
-}
+// Randomize order
+photos.sort(() => Math.random() - 0.5);
 
 
-// Shuffle photos when page opens
-let photoOrder = shuffle(images);
+// Show photo
+function showPhoto(index) {
 
-
-// Display a photo
-function showImage(index) {
-
-  if (photoOrder.length === 0) return;
-
-  currentIndex =
-    (index + photoOrder.length) % photoOrder.length;
+  current = (index + photos.length) % photos.length;
 
   photo.style.opacity = "0";
 
   setTimeout(() => {
 
-    photo.src = photoOrder[currentIndex];
+    photo.src = photos[current];
 
-    const scale = randomNumber(0.88, 1);
-    const x = randomNumber(-3, 3);
-    const y = randomNumber(-3, 3);
-    const rotation = randomNumber(-2, 2);
+    const scale = random(0.9, 1);
+    const x = random(-2, 2);
+    const y = random(-2, 2);
+    const rotation = random(-1.5, 1.5);
 
     photo.style.transform =
       `translate(${x}vw, ${y}vh)
@@ -63,83 +47,53 @@ function showImage(index) {
       photo.style.opacity = "1";
     };
 
-  }, 250);
-
-  scheduleNext();
-}
-
-
-// Next photo
-function showNext() {
-  showImage(currentIndex + 1);
-}
-
-
-// Previous photo
-function showPrevious() {
-  showImage(currentIndex - 1);
-}
-
-
-// Automatic change
-function scheduleNext() {
+  }, 300);
 
   clearTimeout(timer);
 
-  const delay =
-    randomNumber(5000, 11000);
-
-  timer =
-    setTimeout(showNext, delay);
+  timer = setTimeout(() => {
+    showPhoto(current + 1);
+  }, random(5000, 10000));
 }
 
 
-// Arrows
-nextButton.addEventListener(
-  "click",
-  showNext
-);
-
-previousButton.addEventListener(
-  "click",
-  showPrevious
-);
+// Next
+next.addEventListener("click", () => {
+  showPhoto(current + 1);
+});
 
 
-// Mobile swipe
-gallery.addEventListener(
-  "touchstart",
-  event => {
-    touchStartX =
-      event.touches[0].clientX;
-  },
-  { passive: true }
-);
-
-
-gallery.addEventListener(
-  "touchend",
-  event => {
-
-    const touchEndX =
-      event.changedTouches[0].clientX;
-
-    const difference =
-      touchEndX - touchStartX;
-
-    if (Math.abs(difference) < 50) {
-      return;
-    }
-
-    if (difference < 0) {
-      showNext();
-    } else {
-      showPrevious();
-    }
-  }
-);
+// Previous
+previous.addEventListener("click", () => {
+  showPhoto(current - 1);
+});
 
 
 // Start
-showNext();
-```
+showPhoto(0);
+
+
+// Mobile swipe
+let startX = 0;
+
+document.addEventListener("touchstart", event => {
+  startX = event.touches[0].clientX;
+});
+
+document.addEventListener("touchend", event => {
+
+  const endX = event.changedTouches[0].clientX;
+
+  const distance = endX - startX;
+
+  if (Math.abs(distance) < 50) {
+    return;
+  }
+
+  if (distance < 0) {
+    showPhoto(current + 1);
+  } else {
+    showPhoto(current - 1);
+  }
+
+});
