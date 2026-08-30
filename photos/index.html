@@ -1,350 +1,167 @@
 ```html
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-
 <meta charset="UTF-8">
-
-<meta
-  name="viewport"
-  content="width=device-width, initial-scale=1.0"
->
-
-<title>Photos</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
-
 html,
 body {
-  margin: 0;
-  padding: 0;
-
-  width: 100%;
-  height: 100%;
-
-  overflow: hidden;
-
-  background: white;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: #ffffff;
 }
 
 #gallery {
-  width: 100vw;
-  height: 100vh;
-
-  display: flex;
-
-  align-items: center;
-  justify-content: center;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 #photo {
-
-  max-width: 88vw;
-  max-height: 88vh;
-
-  width: auto;
-  height: auto;
-
-  object-fit: contain;
-
-  user-select: none;
-
-  -webkit-user-drag: none;
-
-  transition:
-    opacity 0.5s ease,
-    transform 0.6s ease;
+    display: block;
+    max-width: 88vw;
+    max-height: 88vh;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    user-select: none;
+    -webkit-user-drag: none;
 }
 
-
-/* Invisible navigation areas */
-
+/* Invisible clickable areas */
 .nav {
-
-  position: fixed;
-
-  top: 0;
-
-  width: 20vw;
-  height: 100vh;
-
-  border: none;
-
-  background: transparent;
-
-  cursor: pointer;
-
-  z-index: 10;
+    position: fixed;
+    top: 0;
+    width: 20vw;
+    height: 100vh;
+    border: 0;
+    background: transparent;
+    padding: 0;
 }
 
 #previous {
-  left: 0;
+    left: 0;
 }
 
 #next {
-  right: 0;
+    right: 0;
 }
-
-
-/* Mobile */
 
 @media (max-width: 600px) {
-
-  #photo {
-
-    max-width: 92vw;
-    max-height: 86vh;
-
-  }
-
-  .nav {
-    width: 25vw;
-  }
-
+    #photo {
+        max-width: 92vw;
+        max-height: 86vh;
+    }
 }
-
 </style>
-
 </head>
-
 
 <body>
 
-
 <div id="gallery">
-
-  <img
-    id="photo"
-    src=""
-    alt=""
-  >
-
+    <img id="photo" alt="">
 </div>
 
-
-<button
-  id="previous"
-  class="nav"
-  aria-label="Previous photo"
-></button>
-
-
-<button
-  id="next"
-  class="nav"
-  aria-label="Next photo"
-></button>
-
+<button id="previous" class="nav"></button>
+<button id="next" class="nav"></button>
 
 <script>
 
-
-/* --------------------------------
-   PHOTOS
--------------------------------- */
-
 const photos = [
-
-  "photo-files/215403813.jpg",
-
-  "photo-files/215542180.jpg",
-
-  "photo-files/220347599.jpg"
-
+    "photo-files/215403813.jpg",
+    "photo-files/215542180.jpg",
+    "photo-files/220347599.jpg"
 ];
 
+const photo = document.getElementById("photo");
+const previous = document.getElementById("previous");
+const next = document.getElementById("next");
 
-/* --------------------------------
-   VARIABLES
--------------------------------- */
-
-const image = document.getElementById("photo");
-
-const previous =
-  document.getElementById("previous");
-
-const next =
-  document.getElementById("next");
-
+let order = [...photos].sort(() => Math.random() - 0.5);
 let current = 0;
 
-let timer;
+function showPhoto() {
+    photo.src = order[current];
+
+    /* Slightly different size each time */
+    const size = 0.92 + Math.random() * 0.08;
+    photo.style.maxWidth = (88 * size) + "vw";
+    photo.style.maxHeight = (88 * size) + "vh";
+}
+
+function nextPhoto() {
+    current++;
+
+    if (current >= order.length) {
+        order = [...photos].sort(() => Math.random() - 0.5);
+        current = 0;
+    }
+
+    showPhoto();
+}
+
+function previousPhoto() {
+    current--;
+
+    if (current < 0) {
+        current = order.length - 1;
+    }
+
+    showPhoto();
+}
+
+next.addEventListener("click", nextPhoto);
+previous.addEventListener("click", previousPhoto);
 
 
-/* --------------------------------
-   RANDOM
--------------------------------- */
+/* Automatic change */
+function automatic() {
+    const delay = 5000 + Math.random() * 6000;
 
-function random(min, max) {
-
-  return Math.random() *
-    (max - min) + min;
-
+    setTimeout(() => {
+        nextPhoto();
+        automatic();
+    }, delay);
 }
 
 
-/* --------------------------------
-   SHOW PHOTO
--------------------------------- */
-
-function showPhoto(index) {
-
-  current =
-    (index + photos.length)
-    % photos.length;
-
-
-  image.style.opacity = "0";
-
-
-  setTimeout(() => {
-
-    image.src =
-      photos[current];
-
-
-    const scale =
-      random(0.90, 1.00);
-
-
-    const x =
-      random(-2, 2);
-
-
-    const y =
-      random(-2, 2);
-
-
-    const rotation =
-      random(-1.5, 1.5);
-
-
-    image.style.transform =
-
-      "translate(" +
-      x + "vw, " +
-      y + "vh) " +
-
-      "rotate(" +
-      rotation + "deg) " +
-
-      "scale(" +
-      scale + ")";
-
-
-    image.onload = () => {
-
-      image.style.opacity = "1";
-
-    };
-
-
-  }, 250);
-
-
-  clearTimeout(timer);
-
-
-  timer = setTimeout(
-
-    () => {
-
-      showPhoto(current + 1);
-
-    },
-
-    random(5000, 10000)
-
-  );
-
-}
-
-
-/* --------------------------------
-   BUTTONS
--------------------------------- */
-
-next.onclick = () => {
-
-  showPhoto(current + 1);
-
-};
-
-
-previous.onclick = () => {
-
-  showPhoto(current - 1);
-
-};
-
-
-/* --------------------------------
-   SWIPE
--------------------------------- */
+/* Mobile swipe */
 
 let startX = 0;
 
-document.addEventListener(
+document.addEventListener("touchstart", event => {
+    startX = event.touches[0].clientX;
+});
 
-  "touchstart",
+document.addEventListener("touchend", event => {
 
-  event => {
-
-    startX =
-      event.touches[0].clientX;
-
-  }
-
-);
-
-
-document.addEventListener(
-
-  "touchend",
-
-  event => {
-
-    const endX =
-      event.changedTouches[0].clientX;
-
-
-    const distance =
-      endX - startX;
-
+    const endX = event.changedTouches[0].clientX;
+    const distance = endX - startX;
 
     if (Math.abs(distance) < 50) {
-
-      return;
-
+        return;
     }
-
 
     if (distance < 0) {
-
-      showPhoto(current + 1);
-
+        nextPhoto();
     } else {
-
-      showPhoto(current - 1);
-
+        previousPhoto();
     }
-
-  }
-
-);
+});
 
 
-/* --------------------------------
-   START
--------------------------------- */
-
-showPhoto(0);
+showPhoto();
+automatic();
 
 </script>
 
-
 </body>
-
 </html>
 ```
