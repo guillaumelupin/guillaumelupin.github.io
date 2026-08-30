@@ -4,43 +4,19 @@ const gallery = document.getElementById("gallery");
 const previousButton = document.querySelector(".prev");
 const nextButton = document.querySelector(".next");
 
-let images = [];
+
+// YOUR PHOTOS
+const images = [
+  "photo-files/215403813.jpg",
+  "photo-files/215542180.jpg",
+  "photo-files/220347599.jpg"
+];
+
+
 let currentIndex = -1;
 let timer = null;
 
 let touchStartX = 0;
-let touchStartY = 0;
-
-
-// Load photos from photos/photo-files
-async function loadImages() {
-  try {
-    const response = await fetch(
-      "https://api.github.com/repos/guillaumelupin/guillaumelupin.github.io/contents/photos/photo-files"
-    );
-
-    if (!response.ok) {
-      throw new Error("Could not load photos");
-    }
-
-    const files = await response.json();
-
-    images = files
-      .filter(file => file.type === "file")
-      .filter(file => /\.(jpg|jpeg|png|webp|gif)$/i.test(file.name))
-      .map(file => file.download_url);
-
-    // Random order
-    images.sort(() => Math.random() - 0.5);
-
-    if (images.length > 0) {
-      showNext();
-    }
-
-  } catch (error) {
-    console.error("Photo loading error:", error);
-  }
-}
 
 
 // Random number
@@ -49,28 +25,34 @@ function randomNumber(min, max) {
 }
 
 
-// Display photo
+// Random order
+function shuffle(array) {
+  return [...array].sort(() => Math.random() - 0.5);
+}
+
+
+// Shuffle photos when page opens
+let photoOrder = shuffle(images);
+
+
+// Display a photo
 function showImage(index) {
 
-  if (!images.length) return;
+  if (photoOrder.length === 0) return;
 
-  currentIndex = (index + images.length) % images.length;
+  currentIndex =
+    (index + photoOrder.length) % photoOrder.length;
 
   photo.style.opacity = "0";
 
   setTimeout(() => {
 
-    photo.src = images[currentIndex];
+    photo.src = photoOrder[currentIndex];
 
-    // Random size
     const scale = randomNumber(0.88, 1);
-
-    // Random position
     const x = randomNumber(-3, 3);
     const y = randomNumber(-3, 3);
-
-    // Slight random rotation
-    const rotation = randomNumber(-2.5, 2.5);
+    const rotation = randomNumber(-2, 2);
 
     photo.style.transform =
       `translate(${x}vw, ${y}vh)
@@ -87,42 +69,49 @@ function showImage(index) {
 }
 
 
-// Next
+// Next photo
 function showNext() {
   showImage(currentIndex + 1);
 }
 
 
-// Previous
+// Previous photo
 function showPrevious() {
   showImage(currentIndex - 1);
 }
 
 
-// Automatic random timing
+// Automatic change
 function scheduleNext() {
 
   clearTimeout(timer);
 
-  const delay = randomNumber(5000, 11000);
+  const delay =
+    randomNumber(5000, 11000);
 
-  timer = setTimeout(showNext, delay);
+  timer =
+    setTimeout(showNext, delay);
 }
 
 
-// Desktop arrows
-nextButton.addEventListener("click", showNext);
-previousButton.addEventListener("click", showPrevious);
+// Arrows
+nextButton.addEventListener(
+  "click",
+  showNext
+);
+
+previousButton.addEventListener(
+  "click",
+  showPrevious
+);
 
 
 // Mobile swipe
 gallery.addEventListener(
   "touchstart",
   event => {
-
-    touchStartX = event.touches[0].clientX;
-    touchStartY = event.touches[0].clientY;
-
+    touchStartX =
+      event.touches[0].clientX;
   },
   { passive: true }
 );
@@ -132,29 +121,25 @@ gallery.addEventListener(
   "touchend",
   event => {
 
-    const touchEndX = event.changedTouches[0].clientX;
-    const touchEndY = event.changedTouches[0].clientY;
+    const touchEndX =
+      event.changedTouches[0].clientX;
 
-    const deltaX = touchEndX - touchStartX;
-    const deltaY = touchEndY - touchStartY;
+    const difference =
+      touchEndX - touchStartX;
 
-    if (
-      Math.abs(deltaX) < 50 ||
-      Math.abs(deltaX) < Math.abs(deltaY)
-    ) {
+    if (Math.abs(difference) < 50) {
       return;
     }
 
-    if (deltaX < 0) {
+    if (difference < 0) {
       showNext();
     } else {
       showPrevious();
     }
-
   }
 );
 
 
 // Start
-loadImages();
+showNext();
 ```
