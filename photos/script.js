@@ -12,11 +12,11 @@ let touchStartX = 0;
 let touchStartY = 0;
 
 
-// Load all photos from the photo-files folder
+// Load photos from photos/photo-files
 async function loadImages() {
   try {
     const response = await fetch(
-      "https://api.github.com/repos/guillaumelupin/guillaumelupin.github.io/contents/photo-files"
+      "https://api.github.com/repos/guillaumelupin/guillaumelupin.github.io/contents/photos/photo-files"
     );
 
     if (!response.ok) {
@@ -49,7 +49,7 @@ function randomNumber(min, max) {
 }
 
 
-// Display a photo
+// Display photo
 function showImage(index) {
 
   if (!images.length) return;
@@ -87,31 +87,30 @@ function showImage(index) {
 }
 
 
-// Next photo
+// Next
 function showNext() {
   showImage(currentIndex + 1);
 }
 
 
-// Previous photo
+// Previous
 function showPrevious() {
   showImage(currentIndex - 1);
 }
 
 
-// Automatic slideshow
+// Automatic random timing
 function scheduleNext() {
 
   clearTimeout(timer);
 
-  // Random delay between 5 and 11 seconds
   const delay = randomNumber(5000, 11000);
 
   timer = setTimeout(showNext, delay);
 }
 
 
-// Desktop navigation
+// Desktop arrows
 nextButton.addEventListener("click", showNext);
 previousButton.addEventListener("click", showPrevious);
 
@@ -139,7 +138,6 @@ gallery.addEventListener(
     const deltaX = touchEndX - touchStartX;
     const deltaY = touchEndY - touchStartY;
 
-    // Ignore small movements and vertical swipes
     if (
       Math.abs(deltaX) < 50 ||
       Math.abs(deltaX) < Math.abs(deltaY)
@@ -157,6 +155,6 @@ gallery.addEventListener(
 );
 
 
-// Start gallery
+// Start
 loadImages();
 ```
