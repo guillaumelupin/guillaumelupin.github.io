@@ -8,7 +8,7 @@ const photos = [
   "photo-files/220347599.jpg"
 ];
 
-let current = -1;
+let current = 0;
 let timer;
 
 
@@ -18,18 +18,14 @@ function random(min, max) {
 }
 
 
-// Randomize order
-photos.sort(() => Math.random() - 0.5);
-
-
-// Show photo
+// Show a photo
 function showPhoto(index) {
 
   current = (index + photos.length) % photos.length;
 
   photo.style.opacity = "0";
 
-  setTimeout(() => {
+  setTimeout(function () {
 
     photo.src = photos[current];
 
@@ -39,11 +35,12 @@ function showPhoto(index) {
     const rotation = random(-1.5, 1.5);
 
     photo.style.transform =
-      `translate(${x}vw, ${y}vh)
-       rotate(${rotation}deg)
-       scale(${scale})`;
+      "translate(" + x + "vw, " +
+      y + "vh) rotate(" +
+      rotation + "deg) scale(" +
+      scale + ")";
 
-    photo.onload = () => {
+    photo.onload = function () {
       photo.style.opacity = "1";
     };
 
@@ -51,49 +48,23 @@ function showPhoto(index) {
 
   clearTimeout(timer);
 
-  timer = setTimeout(() => {
+  timer = setTimeout(function () {
     showPhoto(current + 1);
   }, random(5000, 10000));
 }
 
 
 // Next
-next.addEventListener("click", () => {
+next.onclick = function () {
   showPhoto(current + 1);
-});
+};
 
 
 // Previous
-previous.addEventListener("click", () => {
+previous.onclick = function () {
   showPhoto(current - 1);
-});
+};
 
 
 // Start
 showPhoto(0);
-
-
-// Mobile swipe
-let startX = 0;
-
-document.addEventListener("touchstart", event => {
-  startX = event.touches[0].clientX;
-});
-
-document.addEventListener("touchend", event => {
-
-  const endX = event.changedTouches[0].clientX;
-
-  const distance = endX - startX;
-
-  if (Math.abs(distance) < 50) {
-    return;
-  }
-
-  if (distance < 0) {
-    showPhoto(current + 1);
-  } else {
-    showPhoto(current - 1);
-  }
-
-});
