@@ -1,3 +1,4 @@
+```javascript
 const photo = document.getElementById("photo");
 const gallery = document.getElementById("gallery");
 const previousButton = document.querySelector(".prev");
@@ -11,7 +12,7 @@ let touchStartX = 0;
 let touchStartY = 0;
 
 
-// Get all photos from the GitHub folder
+// Load all photos from the photo-files folder
 async function loadImages() {
   try {
     const response = await fetch(
@@ -48,7 +49,7 @@ function randomNumber(min, max) {
 }
 
 
-// Show photo
+// Display a photo
 function showImage(index) {
 
   if (!images.length) return;
@@ -64,11 +65,11 @@ function showImage(index) {
     // Random size
     const scale = randomNumber(0.88, 1);
 
-    // Small random movement
+    // Random position
     const x = randomNumber(-3, 3);
     const y = randomNumber(-3, 3);
 
-    // Small random rotation
+    // Slight random rotation
     const rotation = randomNumber(-2.5, 2.5);
 
     photo.style.transform =
@@ -98,7 +99,7 @@ function showPrevious() {
 }
 
 
-// Automatic scrolling
+// Automatic slideshow
 function scheduleNext() {
 
   clearTimeout(timer);
@@ -110,44 +111,52 @@ function scheduleNext() {
 }
 
 
-// Desktop arrows
+// Desktop navigation
 nextButton.addEventListener("click", showNext);
 previousButton.addEventListener("click", showPrevious);
 
 
 // Mobile swipe
-gallery.addEventListener("touchstart", event => {
+gallery.addEventListener(
+  "touchstart",
+  event => {
 
-  touchStartX = event.touches[0].clientX;
-  touchStartY = event.touches[0].clientY;
+    touchStartX = event.touches[0].clientX;
+    touchStartY = event.touches[0].clientY;
 
-}, { passive: true });
+  },
+  { passive: true }
+);
 
 
-gallery.addEventListener("touchend", event => {
+gallery.addEventListener(
+  "touchend",
+  event => {
 
-  const touchEndX = event.changedTouches[0].clientX;
-  const touchEndY = event.changedTouches[0].clientY;
+    const touchEndX = event.changedTouches[0].clientX;
+    const touchEndY = event.changedTouches[0].clientY;
 
-  const deltaX = touchEndX - touchStartX;
-  const deltaY = touchEndY - touchStartY;
+    const deltaX = touchEndX - touchStartX;
+    const deltaY = touchEndY - touchStartY;
 
-  // Ignore vertical movement
-  if (
-    Math.abs(deltaX) < 50 ||
-    Math.abs(deltaX) < Math.abs(deltaY)
-  ) {
-    return;
+    // Ignore small movements and vertical swipes
+    if (
+      Math.abs(deltaX) < 50 ||
+      Math.abs(deltaX) < Math.abs(deltaY)
+    ) {
+      return;
+    }
+
+    if (deltaX < 0) {
+      showNext();
+    } else {
+      showPrevious();
+    }
+
   }
-
-  if (deltaX < 0) {
-    showNext();
-  } else {
-    showPrevious();
-  }
-
-});
+);
 
 
-// Start
+// Start gallery
 loadImages();
+```
