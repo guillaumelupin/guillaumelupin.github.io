@@ -3,50 +3,54 @@ const gallery = document.getElementById("gallery");
 const previousButton = document.querySelector(".prev");
 const nextButton = document.querySelector(".next");
 
-const imageFolder = "images/";
-
 let images = [];
 let currentIndex = -1;
 let timer = null;
+
 let touchStartX = 0;
 let touchStartY = 0;
 
-function randomNumber(min, max) {
-  return Math.random() * (max - min) + min;
-}
 
-function shuffle(array) {
-  return [...array].sort(() => Math.random() - 0.5);
-}
-
+// Get all photos from the GitHub folder
 async function loadImages() {
   try {
     const response = await fetch(
-      "https://api.github.com/repos/guillaumelupin/guillaumelupin.github.io/contents/photos/images"
+      "https://api.github.com/repos/guillaumelupin/guillaumelupin.github.io/contents/photo-files"
     );
 
     if (!response.ok) {
-      throw new Error("Could not load images");
+      throw new Error("Could not load photos");
     }
 
     const files = await response.json();
 
-    images = shuffle(
-      files
-        .filter(file => file.type === "file")
-        .filter(file => /\.(jpg|jpeg|png|webp|gif)$/i.test(file.name))
-        .map(file => file.download_url)
-    );
+    images = files
+      .filter(file => file.type === "file")
+      .filter(file => /\.(jpg|jpeg|png|webp|gif)$/i.test(file.name))
+      .map(file => file.download_url);
+
+    // Random order
+    images.sort(() => Math.random() - 0.5);
 
     if (images.length > 0) {
       showNext();
     }
+
   } catch (error) {
-    console.error(error);
+    console.error("Photo loading error:", error);
   }
 }
 
+
+// Random number
+function randomNumber(min, max) {
+  return Math.random() * (max - min) + min;
+}
+
+
+// Show photo
 function showImage(index) {
+
   if (!images.length) return;
 
   currentIndex = (index + images.length) % images.length;
@@ -54,58 +58,85 @@ function showImage(index) {
   photo.style.opacity = "0";
 
   setTimeout(() => {
+
     photo.src = images[currentIndex];
 
-    const rotation = randomNumber(-2.5, 2.5);
-    const x = randomNumber(-3, 3);
-    const y = randomNumber(-3, 3);
+    // Random size
     const scale = randomNumber(0.88, 1);
 
+    // Small random movement
+    const x = randomNumber(-3, 3);
+    const y = randomNumber(-3, 3);
+
+    // Small random rotation
+    const rotation = randomNumber(-2.5, 2.5);
+
     photo.style.transform =
-      `translate(${x}vw, ${y}vh) rotate(${rotation}deg) scale(${scale})`;
+      `translate(${x}vw, ${y}vh)
+       rotate(${rotation}deg)
+       scale(${scale})`;
 
     photo.onload = () => {
       photo.style.opacity = "1";
     };
+
   }, 250);
 
   scheduleNext();
 }
 
+
+// Next photo
 function showNext() {
   showImage(currentIndex + 1);
 }
 
+
+// Previous photo
 function showPrevious() {
   showImage(currentIndex - 1);
 }
 
+
+// Automatic scrolling
 function scheduleNext() {
+
   clearTimeout(timer);
 
-  // Between 5 and 11 seconds
+  // Random delay between 5 and 11 seconds
   const delay = randomNumber(5000, 11000);
 
   timer = setTimeout(showNext, delay);
 }
 
+
+// Desktop arrows
 nextButton.addEventListener("click", showNext);
 previousButton.addEventListener("click", showPrevious);
 
+
+// Mobile swipe
 gallery.addEventListener("touchstart", event => {
+
   touchStartX = event.touches[0].clientX;
   touchStartY = event.touches[0].clientY;
+
 }, { passive: true });
 
+
 gallery.addEventListener("touchend", event => {
+
   const touchEndX = event.changedTouches[0].clientX;
   const touchEndY = event.changedTouches[0].clientY;
 
   const deltaX = touchEndX - touchStartX;
   const deltaY = touchEndY - touchStartY;
 
-  // Ignore mostly vertical swipes
-  if (Math.abs(deltaX) < 50 || Math.abs(deltaX) < Math.abs(deltaY)) {
+  // Ignore vertical movement
+  if (
+    Math.abs(deltaX) < 50 ||
+    Math.abs(deltaX) < Math.abs(deltaY)
+  ) {
     return;
   }
 
@@ -114,6 +145,9 @@ gallery.addEventListener("touchend", event => {
   } else {
     showPrevious();
   }
+
 });
 
+
+// Start
 loadImages();
