@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+html,
+body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: #ffffff;
+}
+
+#gallery {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#photo {
+    display: block;
+    max-width: 88vw;
+    max-height: 88vh;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    user-select: none;
+    -webkit-user-drag: none;
+}
+
+/* Invisible clickable areas */
+.nav {
+    position: fixed;
+    top: 0;
+    width: 20vw;
+    height: 100vh;
+    border: 0;
+    background: transparent;
+    padding: 0;
+}
+
+#previous {
+    left: 0;
+}
+
+#next {
+    right: 0;
+}
+
+@media (max-width: 600px) {
+    #photo {
+        max-width: 92vw;
+        max-height: 86vh;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<div id="gallery">
+    <img id="photo" alt="">
+</div>
+
+<button id="previous" class="nav"></button>
+<button id="next" class="nav"></button>
+
+<script>
+
+const photos = [
+    "photo-files/215403813.jpg",
+    "photo-files/215542180.jpg",
+    "photo-files/220347599.jpg"
+];
+
+const photo = document.getElementById("photo");
+const previous = document.getElementById("previous");
+const next = document.getElementById("next");
+
+let order = [...photos].sort(() => Math.random() - 0.5);
+let current = 0;
+
+function showPhoto() {
+    photo.src = order[current];
+
+    /* Slightly different size each time */
+    const size = 0.92 + Math.random() * 0.08;
+    photo.style.maxWidth = (88 * size) + "vw";
+    photo.style.maxHeight = (88 * size) + "vh";
+}
+
+function nextPhoto() {
+    current++;
+
+    if (current >= order.length) {
+        order = [...photos].sort(() => Math.random() - 0.5);
+        current = 0;
+    }
+
+    showPhoto();
+}
+
+function previousPhoto() {
+    current--;
+
+    if (current < 0) {
+        current = order.length - 1;
+    }
+
+    showPhoto();
+}
+
+next.addEventListener("click", nextPhoto);
+previous.addEventListener("click", previousPhoto);
+
+
+/* Automatic change */
+function automatic() {
+    const delay = 5000 + Math.random() * 6000;
+
+    setTimeout(() => {
+        nextPhoto();
+        automatic();
+    }, delay);
+}
+
+
+/* Mobile swipe */
+
+let startX = 0;
+
+document.addEventListener("touchstart", event => {
+    startX = event.touches[0].clientX;
+});
+
+document.addEventListener("touchend", event => {
+
+    const endX = event.changedTouches[0].clientX;
+    const distance = endX - startX;
+
+    if (Math.abs(distance) < 50) {
+        return;
+    }
+
+    if (distance < 0) {
+        nextPhoto();
+    } else {
+        previousPhoto();
+    }
+});
+
+
+showPhoto();
+automatic();
+
+</script>
+
+</body>
+</html>
+```
