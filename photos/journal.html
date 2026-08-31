@@ -2,9 +2,15 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+<meta name="viewport"
+      content="width=device-width,
+               initial-scale=1.0,
+               maximum-scale=1.0,
+               user-scalable=no">
 
 <style>
+
 html,
 body {
     margin: 0;
@@ -27,11 +33,14 @@ body {
 .photo {
     position: absolute;
     display: block;
+
     object-fit: contain;
+
     user-select: none;
     -webkit-user-drag: none;
     pointer-events: none;
 }
+
 </style>
 </head>
 
@@ -41,209 +50,659 @@ body {
 
 <script>
 
+/* =========================================
+   SETTINGS
+========================================= */
+
 const API =
 "https://api.github.com/repos/guillaumelupin/guillaumelupin.github.io/contents/photos/journal?ref=main";
 
-const journal = document.getElementById("journal");
+const MAX_PHOTOS = 3;
+
+const CHECK_INTERVAL = 8000;
+
+const MIN_LIFETIME = 5000;
+
+const MAX_LIFETIME = 10000;
+
+
+/*
+   Chance of adding a photo when
+   there is space available.
+
+   This value is recalculated randomly
+   every 8 seconds.
+*/
+const MIN_SPAWN_CHANCE = 0.35;
+const MAX_SPAWN_CHANCE = 0.80;
+
+
+/*
+   Probability of allowing overlap.
+*/
+const OVERLAP_CHANCE = 0.15;
+
+
+/* =========================================
+   VARIABLES
+========================================= */
+
+const journal =
+    document.getElementById("journal");
 
 let photos = [];
 
+let activePhotos = [];
 
-/* --------------------------------
+let recentPhotos = [];
+
+
+/* =========================================
+   RANDOM
+========================================= */
+
+function random(min, max) {
+
+    return Math.random() * (max - min) + min;
+
+}
+
+
+function randomInt(min, max) {
+
+    return Math.floor(
+        random(min, max + 1)
+    );
+
+}
+
+
+/* =========================================
+   SHUFFLE
+========================================= */
+
+function shuffle(array) {
+
+    return [...array].sort(
+        () => Math.random() - 0.5
+    );
+
+}
+
+
+/* =========================================
    LOAD PHOTO LIST
--------------------------------- */
+========================================= */
 
 async function loadPhotos() {
 
     try {
 
-        const response = await fetch(API);
+        const response =
+            await fetch(API);
 
         if (!response.ok) {
-            throw new Error("GitHub API error");
+            throw new Error(
+                "GitHub API error"
+            );
         }
 
-        const files = await response.json();
+        const files =
+            await response.json();
+
 
         photos = files
+
             .filter(file =>
                 file.type === "file" &&
-                /\.(jpg|jpeg|png|webp|gif)$/i.test(file.name)
+                /\.(jpg|jpeg|png|webp|gif)$/i
+                    .test(file.name)
             )
-            .map(file => file.download_url);
 
-        if (photos.length > 0) {
-            createJournal();
-        }
+            .map(file =>
+                "https://raw.githubusercontent.com/" +
+                "guillaumelupin/" +
+                "guillaumelupin.github.io/" +
+                "main/photos/journal/" +
+                encodeURIComponent(file.name)
+            );
+
+
+        /*
+           Start the Journal.
+        */
+
+        trySpawnPhoto();
+
 
     } catch (error) {
 
-        console.error("Could not load Journal photos:", error);
+        console.error(
+            "Could not load Journal photos:",
+            error
+        );
 
     }
+
 }
 
 
-/* --------------------------------
-   RANDOM NUMBER
--------------------------------- */
+/* =========================================
+   PRELOAD IMAGE
+========================================= */
 
-function random(min, max) {
-    return Math.random() * (max - min) + min;
-}
+function preloadImage(src) {
 
+    return new Promise(resolve => {
 
-/* --------------------------------
-   SHUFFLE
--------------------------------- */
-
-function shuffle(array) {
-    return [...array].sort(() => Math.random() - 0.5);
-}
+        const img =
+            new Image();
 
 
-/* --------------------------------
-   CREATE JOURNAL
--------------------------------- */
+        img.onload = () => {
 
-function createJournal() {
+            resolve(img);
 
-    if (photos.length === 0) {
-        return;
-    }
-
-    journal.innerHTML = "";
+        };
 
 
-    /* 1, 2 or 3 photos */
+        img.onerror = () => {
 
-    const count =
-        Math.floor(Math.random() * 3) + 1;
+            /*
+               Do NOT remove the photo
+               from the collection.
+
+               We simply don't display it
+               this time.
+            */
+
+            resolve(null);
+
+        };
 
 
-    /* Select random photos */
-
-    const selected =
-        shuffle(photos).slice(0, count);
-
-
-    /*
-       Generate positions randomly.
-       We keep trying until the photos
-       don't overlap.
-    */
-
-    const positions = [];
-
-    selected.forEach((src, index) => {
-
-        const img = document.createElement("img");
-
-        img.className = "photo";
         img.src = src;
-        img.draggable = false;
-
-        let x;
-        let y;
-        let w;
-        let h;
-
-        let valid = false;
-        let attempts = 0;
-
-
-        while (!valid && attempts < 100) {
-
-            attempts++;
-
-
-            /* Random size */
-
-            if (count === 1) {
-
-                w = random(45, 75);
-                h = random(45, 80);
-
-            } else if (count === 2) {
-
-                w = random(25, 55);
-                h = random(25, 60);
-
-            } else {
-
-                w = random(20, 42);
-                h = random(20, 50);
-
-            }
-
-
-            /* Random position */
-
-            x = random(2, 98 - w);
-            y = random(2, 98 - h);
-
-
-            valid = true;
-
-
-            /* Check overlap */
-
-            for (const p of positions) {
-
-                const gap = 2;
-
-                const overlap =
-                    x < p.x + p.w + gap &&
-                    x + w + gap > p.x &&
-                    y < p.y + p.h + gap &&
-                    y + h + gap > p.y;
-
-                if (overlap) {
-                    valid = false;
-                    break;
-                }
-            }
-
-        }
-
-
-        positions.push({
-            x: x,
-            y: y,
-            w: w,
-            h: h
-        });
-
-
-        img.style.left = x + "%";
-        img.style.top = y + "%";
-        img.style.width = w + "%";
-        img.style.height = h + "%";
-
-
-        journal.appendChild(img);
 
     });
 
 }
 
 
-/* --------------------------------
-   INITIAL LOAD
--------------------------------- */
+/* =========================================
+   CHOOSE PHOTO
+========================================= */
+
+function choosePhoto() {
+
+    if (photos.length === 0) {
+        return null;
+    }
+
+
+    /*
+       Avoid the same photo appearing
+       three times consecutively.
+
+       We remember the last two selected
+       photos.
+    */
+
+    let candidates =
+        photos.filter(src =>
+            !recentPhotos.includes(src)
+        );
+
+
+    /*
+       If the collection is too small,
+       relax the rule.
+    */
+
+    if (candidates.length === 0) {
+
+        candidates = [...photos];
+
+    }
+
+
+    return candidates[
+        randomInt(
+            0,
+            candidates.length - 1
+        )
+    ];
+
+}
+
+
+/* =========================================
+   CHECK OVERLAP
+========================================= */
+
+function overlaps(a, b) {
+
+    return (
+
+        a.x < b.x + b.w &&
+        a.x + a.w > b.x &&
+        a.y < b.y + b.h &&
+        a.y + a.h > b.y
+
+    );
+
+}
+
+
+/* =========================================
+   FIND POSITION
+========================================= */
+
+function findPosition(width, height) {
+
+    /*
+       15% chance of allowing overlap.
+    */
+
+    const allowOverlap =
+        Math.random() < OVERLAP_CHANCE;
+
+
+    for (let attempt = 0;
+         attempt < 100;
+         attempt++) {
+
+
+        const position = {
+
+            x: random(
+                1,
+                99 - width
+            ),
+
+            y: random(
+                1,
+                99 - height
+            ),
+
+            w: width,
+            h: height
+
+        };
+
+
+        /*
+           If overlap is allowed,
+           accept immediately.
+        */
+
+        if (allowOverlap) {
+
+            return position;
+
+        }
+
+
+        /*
+           Otherwise check every
+           currently visible photo.
+        */
+
+        let collision = false;
+
+
+        for (const active of activePhotos) {
+
+            if (
+                overlaps(
+                    position,
+                    active.position
+                )
+            ) {
+
+                collision = true;
+
+                break;
+
+            }
+
+        }
+
+
+        if (!collision) {
+
+            return position;
+
+        }
+
+    }
+
+
+    /*
+       If we cannot find a free space,
+       allow overlap anyway.
+    */
+
+    return {
+
+        x: random(
+            1,
+            99 - width
+        ),
+
+        y: random(
+            1,
+            99 - height
+        ),
+
+        w: width,
+        h: height
+
+    };
+
+}
+
+
+/* =========================================
+   CREATE PHOTO
+========================================= */
+
+async function spawnPhoto() {
+
+    if (
+        activePhotos.length >= MAX_PHOTOS
+    ) {
+        return;
+    }
+
+
+    const src =
+        choosePhoto();
+
+
+    if (!src) {
+        return;
+    }
+
+
+    /*
+       IMPORTANT:
+
+       The image is completely loaded
+       BEFORE it gets inserted into
+       the page.
+    */
+
+    const loaded =
+        await preloadImage(src);
+
+
+    /*
+       If loading failed, don't delete
+       the image from the collection.
+
+       Simply wait for the next attempt.
+    */
+
+    if (!loaded) {
+        return;
+    }
+
+
+    /*
+       Re-check the limit because another
+       photo may have appeared while this
+       one was loading.
+    */
+
+    if (
+        activePhotos.length >= MAX_PHOTOS
+    ) {
+        return;
+    }
+
+
+    /* =====================================
+       RANDOM SIZE
+    ===================================== */
+
+
+    /*
+       Photos are deliberately fairly large.
+
+       The actual image will still preserve
+       its proportions because object-fit is
+       contain.
+    */
+
+    let width;
+    let height;
+
+
+    if (
+        window.innerWidth >
+        window.innerHeight
+    ) {
+
+        /*
+           Computer / landscape
+        */
+
+        width =
+            random(28, 52);
+
+        height =
+            random(28, 62);
+
+    } else {
+
+        /*
+           Phone / portrait
+        */
+
+        width =
+            random(38, 68);
+
+        height =
+            random(28, 55);
+
+    }
+
+
+    /*
+       Make sure the image cannot exceed
+       the screen.
+    */
+
+    width =
+        Math.min(width, 88);
+
+    height =
+        Math.min(height, 88);
+
+
+    const position =
+        findPosition(
+            width,
+            height
+        );
+
+
+    /* =====================================
+       CREATE DOM ELEMENT
+    ===================================== */
+
+    const img =
+        document.createElement("img");
+
+
+    img.className =
+        "photo";
+
+
+    /*
+       Use the already loaded image
+       directly.
+    */
+
+    img.src =
+        loaded.src;
+
+
+    img.draggable =
+        false;
+
+
+    img.style.left =
+        position.x + "%";
+
+
+    img.style.top =
+        position.y + "%";
+
+
+    img.style.width =
+        position.w + "%";
+
+
+    img.style.height =
+        position.h + "%";
+
+
+    journal.appendChild(img);
+
+
+    /* =====================================
+       REGISTER ACTIVE PHOTO
+    ===================================== */
+
+    const active = {
+
+        element: img,
+
+        src: src,
+
+        position: position
+
+    };
+
+
+    activePhotos.push(active);
+
+
+    /*
+       Remember this photo.
+
+       Keep only the last two.
+    */
+
+    recentPhotos.push(src);
+
+
+    if (recentPhotos.length > 2) {
+
+        recentPhotos.shift();
+
+    }
+
+
+    /* =====================================
+       RANDOM LIFETIME
+    ===================================== */
+
+    const lifetime =
+        random(
+            MIN_LIFETIME,
+            MAX_LIFETIME
+        );
+
+
+    setTimeout(() => {
+
+        /*
+           Remove from screen.
+        */
+
+        img.remove();
+
+
+        /*
+           Remove from active list.
+        */
+
+        activePhotos =
+            activePhotos.filter(
+                item =>
+                    item !== active
+            );
+
+
+    }, lifetime);
+
+}
+
+
+/* =========================================
+   SPAWN DECISION
+========================================= */
+
+function trySpawnPhoto() {
+
+    /*
+       Never exceed three photos.
+    */
+
+    if (
+        activePhotos.length >= MAX_PHOTOS
+    ) {
+
+        return;
+
+    }
+
+
+    /*
+       New random probability every cycle.
+    */
+
+    const chance =
+        random(
+            MIN_SPAWN_CHANCE,
+            MAX_SPAWN_CHANCE
+        );
+
+
+    /*
+       Decide whether to add one.
+    */
+
+    if (
+        Math.random() < chance
+    ) {
+
+        spawnPhoto();
+
+    }
+
+}
+
+
+/* =========================================
+   START
+========================================= */
 
 loadPhotos();
 
 
-/* --------------------------------
-   NEW COMPOSITION EVERY 5 SECONDS
--------------------------------- */
+/*
+   Every 8 seconds we reconsider
+   whether a new photo should appear.
+*/
 
 setInterval(() => {
 
-    createJournal();
+    trySpawnPhoto();
 
-}, 5000);
+}, CHECK_INTERVAL);
 
 </script>
 
