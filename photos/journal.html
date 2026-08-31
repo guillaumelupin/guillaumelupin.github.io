@@ -34,7 +34,6 @@ body {
     -webkit-user-drag: none;
 }
 
-/* Invisible clickable areas */
 .nav {
     position: fixed;
     top: 0;
@@ -72,11 +71,10 @@ body {
 <button id="next" class="nav"></button>
 
 <script>
-
 const photos = [
-    "photo-files/215403813.jpg",
-    "photo-files/215542180.jpg",
-    "photo-files/220347599.jpg"
+    "journal/photo1.jpg",
+    "journal/photo2.jpg",
+    "journal/photo3.jpg"
 ];
 
 const photo = document.getElementById("photo");
@@ -89,7 +87,6 @@ let current = 0;
 function showPhoto() {
     photo.src = order[current];
 
-    /* Slightly different size each time */
     const size = 0.92 + Math.random() * 0.08;
     photo.style.maxWidth = (88 * size) + "vw";
     photo.style.maxHeight = (88 * size) + "vh";
@@ -119,8 +116,6 @@ function previousPhoto() {
 next.addEventListener("click", nextPhoto);
 previous.addEventListener("click", previousPhoto);
 
-
-/* Automatic change */
 function automatic() {
     const delay = 5000 + Math.random() * 6000;
 
@@ -130,9 +125,6 @@ function automatic() {
     }, delay);
 }
 
-
-/* Mobile swipe */
-
 let startX = 0;
 
 document.addEventListener("touchstart", event => {
@@ -140,7 +132,6 @@ document.addEventListener("touchstart", event => {
 });
 
 document.addEventListener("touchend", event => {
-
     const endX = event.changedTouches[0].clientX;
     const distance = endX - startX;
 
@@ -155,12 +146,9 @@ document.addEventListener("touchend", event => {
     }
 });
 
-
 showPhoto();
 automatic();
-
 </script>
 
 </body>
 </html>
-```
