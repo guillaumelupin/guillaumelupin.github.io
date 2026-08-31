@@ -49,13 +49,13 @@ body {
     padding: 0;
     border: none;
     background: transparent;
-    opacity: 0.10;
+    opacity: 0.08;
     z-index: 1000;
     cursor: pointer;
 }
 
 #fullscreen:hover {
-    opacity: 0.35;
+    opacity: 0.3;
 }
 
 #fullscreen svg {
@@ -91,10 +91,12 @@ body {
 
 </button>
 
+
 <script>
 
+
 /* =========================================================
-   GITHUB
+   GITHUB FOLDER
 ========================================================= */
 
 const API =
@@ -118,6 +120,11 @@ const MAX_PHOTOS = 3;
 const MIN_LIFETIME = 5500;
 const MAX_LIFETIME = 15000;
 
+
+/*
+   Extremely rare long lifetime.
+*/
+
 const RARE_LIFETIME_CHANCE = 0.02;
 const RARE_MAX_LIFETIME = 20000;
 
@@ -126,11 +133,11 @@ const RARE_MAX_LIFETIME = 20000;
    TIME BETWEEN EVENTS
 ========================================================= */
 
-const MOBILE_MIN_DELAY = 2300;
-const MOBILE_MAX_DELAY = 5200;
+const MOBILE_MIN_DELAY = 2500;
+const MOBILE_MAX_DELAY = 5500;
 
-const DESKTOP_MIN_DELAY = 2600;
-const DESKTOP_MAX_DELAY = 6200;
+const DESKTOP_MIN_DELAY = 2800;
+const DESKTOP_MAX_DELAY = 6500;
 
 
 /* =========================================================
@@ -138,13 +145,15 @@ const DESKTOP_MAX_DELAY = 6200;
 ========================================================= */
 
 /*
-   1 photo = dominant
-   2 photos = common
-   3 photos = rare
+   One photo is deliberately dominant.
+
+   Two photos are common.
+
+   Three photos are rare.
 */
 
-const DOUBLE_CHANCE = 0.30;
-const TRIPLE_CHANCE = 0.035;
+const DOUBLE_CHANCE = 0.25;
+const TRIPLE_CHANCE = 0.025;
 
 
 /* =========================================================
@@ -152,25 +161,25 @@ const TRIPLE_CHANCE = 0.035;
 ========================================================= */
 
 /*
-   Normal overlap is now VERY rare.
+   Almost everything should NOT overlap.
 */
 
-const BASE_OVERLAP_CHANCE = 0.07;
+const BASE_OVERLAP_CHANCE = 0.025;
 
 
 /*
-   With three photos, overlap is a little
-   more likely, but still uncommon.
+   Slightly higher when trying to fit
+   a third photo.
 */
 
-const THREE_PHOTO_OVERLAP_CHANCE = 0.14;
+const THREE_PHOTO_OVERLAP_CHANCE = 0.07;
 
 
 /*
-   Extremely rare unusual composition.
+   Extremely rare "shiny" overlap.
 */
 
-const RARE_OVERLAP_CHANCE = 0.008;
+const RARE_OVERLAP_CHANCE = 0.004;
 
 
 /* =========================================================
@@ -234,15 +243,7 @@ function preloadImage(src) {
         };
 
         img.onerror = () => {
-
-            /*
-               Do not remove failed images.
-               They remain available for another
-               attempt later.
-            */
-
             resolve(null);
-
         };
 
         img.src = src;
@@ -253,7 +254,7 @@ function preloadImage(src) {
 
 
 /* =========================================================
-   LOAD FILES FROM GITHUB
+   LOAD PHOTOS
 ========================================================= */
 
 async function loadPhotos() {
@@ -273,6 +274,7 @@ async function loadPhotos() {
 
         const files =
         await response.json();
+
 
         photos = files
 
@@ -320,11 +322,10 @@ function choosePhoto() {
 
 
     /*
-       Every photo remains eligible.
+       Every photo remains available.
 
-       Recent photos are simply given a very
-       low probability rather than being
-       removed from the pool.
+       Recent photos receive a probability
+       penalty rather than being excluded.
     */
 
     const weighted = [];
@@ -336,8 +337,8 @@ function choosePhoto() {
 
 
         /*
-           Last photo:
-           strongly discouraged.
+           Last displayed photo:
+           very unlikely.
         */
 
         if (
@@ -348,14 +349,14 @@ function choosePhoto() {
             ]
         ) {
 
-            weight = 2;
+            weight = 1;
 
         }
 
 
         /*
-           Second-to-last:
-           slightly discouraged.
+           Previous photo:
+           somewhat unlikely.
         */
 
         else if (
@@ -366,14 +367,10 @@ function choosePhoto() {
             ]
         ) {
 
-            weight = 15;
+            weight = 12;
 
         }
 
-
-        /*
-           Add weighted entries.
-        */
 
         for (
             let i = 0;
@@ -389,15 +386,15 @@ function choosePhoto() {
 
 
     /*
-       Very rare immediate repetition.
+       Extremely rare immediate repetition.
 
-       Still never allows the same photo
-       to become the last 3 selections.
+       Three consecutive repetitions
+       remain impossible.
     */
 
     if (
         recentPhotos.length > 0 &&
-        Math.random() < 0.025
+        Math.random() < 0.015
     ) {
 
         const previous =
@@ -405,11 +402,6 @@ function choosePhoto() {
             recentPhotos.length - 1
         ];
 
-
-        /*
-           Only allow this if it would not
-           create three consecutive appearances.
-        */
 
         if (
             recentPhotos.length < 2 ||
@@ -436,7 +428,7 @@ function choosePhoto() {
 
 
 /* =========================================================
-   COLLISION
+   RECTANGLE COLLISION
 ========================================================= */
 
 function overlaps(a, b) {
@@ -454,20 +446,31 @@ function overlaps(a, b) {
 
 
 /* =========================================================
-   POSITION
+   FIND POSITION
 ========================================================= */
 
 function findPosition(
     width,
     height,
-    threePhotoMode = false
+    thirdPhoto = false
 ) {
+
+
+    /*
+       Normal overlap probability.
+    */
 
     let overlapChance =
     BASE_OVERLAP_CHANCE;
 
 
-    if (threePhotoMode) {
+    /*
+       Third photos get slightly more
+       tolerance because available space
+       is naturally smaller.
+    */
+
+    if (thirdPhoto) {
 
         overlapChance =
         THREE_PHOTO_OVERLAP_CHANCE;
@@ -476,7 +479,7 @@ function findPosition(
 
 
     /*
-       Very rare exceptional overlap.
+       Extremely rare unusual overlap.
     */
 
     if (
@@ -484,7 +487,7 @@ function findPosition(
         RARE_OVERLAP_CHANCE
     ) {
 
-        overlapChance = 0.45;
+        overlapChance = 0.30;
 
     }
 
@@ -495,15 +498,25 @@ function findPosition(
 
 
     /*
-       Try very hard to find a clean
-       position first.
+       =====================================================
+       MOST IMPORTANT PART:
+
+       Try MANY positions.
+
+       The existing photos create protected
+       zones.
+
+       We therefore strongly prefer completely
+       empty white space.
+       =====================================================
     */
 
     for (
         let attempt = 0;
-        attempt < 400;
+        attempt < 600;
         attempt++
     ) {
+
 
         const position = {
 
@@ -524,8 +537,7 @@ function findPosition(
 
 
         /*
-           If overlap was intentionally
-           selected, accept immediately.
+           Intentional rare overlap.
         */
 
         if (intentionalOverlap) {
@@ -538,7 +550,9 @@ function findPosition(
         let collision = false;
 
 
-        for (const active of activePhotos) {
+        for (
+            const active of activePhotos
+        ) {
 
             if (
                 overlaps(
@@ -548,12 +562,18 @@ function findPosition(
             ) {
 
                 collision = true;
+
                 break;
 
             }
 
         }
 
+
+        /*
+           Only accept if the entire
+           rectangle is in free space.
+        */
 
         if (!collision) {
 
@@ -565,32 +585,17 @@ function findPosition(
 
 
     /*
-       Only if there really is no room,
-       allow overlap.
+       If the screen genuinely has no room,
+       don't force a new image.
     */
 
-    return {
-
-        x: random(
-            2,
-            98 - width
-        ),
-
-        y: random(
-            2,
-            98 - height
-        ),
-
-        w: width,
-        h: height
-
-    };
+    return null;
 
 }
 
 
 /* =========================================================
-   SIZE
+   PHOTO SIZE
 ========================================================= */
 
 function getPhotoSize(
@@ -602,7 +607,9 @@ function getPhotoSize(
 
 
     /*
-       Rare giant image.
+       =====================================
+       VERY RARE GIANT PHOTO
+       =====================================
     */
 
     if (
@@ -614,12 +621,12 @@ function getPhotoSize(
         return {
 
             width: mobile
-                ? random(76, 90)
-                : random(62, 84),
+                ? random(78, 91)
+                : random(68, 88),
 
             height: mobile
-                ? random(72, 91)
-                : random(65, 88)
+                ? random(75, 92)
+                : random(68, 90)
 
         };
 
@@ -627,7 +634,13 @@ function getPhotoSize(
 
 
     /*
-       Third image.
+       =====================================
+       THIRD PHOTO
+       =====================================
+
+       Three photos should only happen
+       when they can remain relatively
+       small and separated.
     */
 
     if (isThirdPhoto) {
@@ -635,12 +648,12 @@ function getPhotoSize(
         return {
 
             width: mobile
-                ? random(25, 40)
-                : random(22, 36),
+                ? random(25, 38)
+                : random(22, 35),
 
             height: mobile
-                ? random(24, 42)
-                : random(24, 40)
+                ? random(24, 40)
+                : random(23, 39)
 
         };
 
@@ -648,15 +661,22 @@ function getPhotoSize(
 
 
     /*
-       Normal mobile image.
+       =====================================
+       NORMAL MOBILE
+       =====================================
     */
 
     if (mobile) {
 
+        /*
+           Larger average size.
+        */
+
         return {
 
-            width: random(46, 76),
-            height: random(40, 70)
+            width: random(52, 79),
+
+            height: random(45, 73)
 
         };
 
@@ -664,13 +684,16 @@ function getPhotoSize(
 
 
     /*
-       Normal desktop image.
+       =====================================
+       NORMAL DESKTOP
+       =====================================
     */
 
     return {
 
-        width: random(32, 60),
-        height: random(34, 70)
+        width: random(38, 64),
+
+        height: random(38, 72)
 
     };
 
@@ -684,7 +707,7 @@ function getPhotoSize(
 function getLifetime() {
 
     /*
-       Very rare long-lasting image.
+       Rare long-lasting photo.
     */
 
     if (
@@ -736,8 +759,7 @@ async function spawnPhoto(
 
 
     /*
-       The image is completely loaded
-       before anything is put on screen.
+       Fully load before displaying.
     */
 
     const loaded =
@@ -745,6 +767,10 @@ async function spawnPhoto(
 
 
     if (!loaded) {
+
+        /*
+           Keep the image in the collection.
+        */
 
         return false;
 
@@ -771,8 +797,21 @@ async function spawnPhoto(
     findPosition(
         size.width,
         size.height,
-        activePhotos.length >= 2
+        isThirdPhoto
     );
+
+
+    /*
+       No suitable white space.
+       Do nothing rather than forcing
+       overlap.
+    */
+
+    if (!position) {
+
+        return false;
+
+    }
 
 
     const img =
@@ -825,8 +864,7 @@ async function spawnPhoto(
 
 
     /*
-       Keep only the last two selections
-       in memory.
+       Remember recently displayed photos.
     */
 
     recentPhotos.push(src);
@@ -842,7 +880,8 @@ async function spawnPhoto(
 
 
     /*
-       Lifetime starts AFTER appearance.
+       The timer starts ONLY once
+       the image is actually visible.
     */
 
     const lifetime =
@@ -879,20 +918,17 @@ async function fillInitialScreen() {
 
 
     /*
-       1 giant/large photo:
-       55%
+       1 LARGE PHOTO: 62%
 
-       2 photos:
-       42%
+       2 PHOTOS: 35%
 
-       3 photos:
-       3%
+       3 PHOTOS: 3%
     */
 
     let target;
 
 
-    if (r < 0.55) {
+    if (r < 0.62) {
 
         target = 1;
 
@@ -931,7 +967,7 @@ async function fillInitialScreen() {
 
 
 /* =========================================================
-   DETERMINE EVENT
+   DETERMINE NEXT EVENT
 ========================================================= */
 
 function determineBatchSize() {
@@ -941,8 +977,9 @@ function determineBatchSize() {
 
 
     /*
-       Empty screen:
-       immediately refill.
+       EMPTY SCREEN
+
+       Strongly favour one large photo.
     */
 
     if (count === 0) {
@@ -950,6 +987,10 @@ function determineBatchSize() {
         const r =
         Math.random();
 
+
+        /*
+           Rare 3-photo event.
+        */
 
         if (
             r < TRIPLE_CHANCE
@@ -960,8 +1001,12 @@ function determineBatchSize() {
         }
 
 
+        /*
+           Two photos.
+        */
+
         if (
-            r < 0.62
+            r < 0.40
         ) {
 
             return 2;
@@ -969,13 +1014,19 @@ function determineBatchSize() {
         }
 
 
+        /*
+           One large photo.
+        */
+
         return 1;
 
     }
 
 
     /*
-       One photo currently visible.
+       =====================================
+       ONE PHOTO
+       =====================================
     */
 
     if (count === 1) {
@@ -984,20 +1035,16 @@ function determineBatchSize() {
         DOUBLE_CHANCE;
 
 
-        let tripleChance =
-        TRIPLE_CHANCE;
-
-
         /*
-           Don't constantly repeat
-           the same batch pattern.
+           Avoid endlessly generating
+           the same two-photo rhythm.
         */
 
         if (
             previousBatchSize === 2
         ) {
 
-            doubleChance *= 0.40;
+            doubleChance *= 0.35;
 
         }
 
@@ -1006,8 +1053,7 @@ function determineBatchSize() {
             previousBatchSize === 3
         ) {
 
-            doubleChance *= 0.25;
-            tripleChance *= 0.20;
+            doubleChance *= 0.20;
 
         }
 
@@ -1017,23 +1063,12 @@ function determineBatchSize() {
 
 
         /*
-           Occasionally add two photos
-           simultaneously.
+           Very rare event that attempts
+           to bring two more photos.
         */
 
         if (
-            r < tripleChance
-        ) {
-
-            return 2;
-
-        }
-
-
-        if (
-            r <
-            tripleChance +
-            doubleChance
+            r < TRIPLE_CHANCE
         ) {
 
             return 2;
@@ -1042,33 +1077,47 @@ function determineBatchSize() {
 
 
         /*
-           Sometimes do nothing and let
-           the current image breathe.
+           Normal second photo.
         */
 
-        if (r < 0.15) {
+        if (
+            r <
+            TRIPLE_CHANCE +
+            doubleChance
+        ) {
 
-            return 0;
+            return 1;
 
         }
 
 
-        return 1;
+        /*
+           Otherwise wait.
+
+           This lets the large image
+           remain contemplative.
+        */
+
+        return 0;
 
     }
 
 
     /*
-       Two photos currently visible.
-
-       Usually add one.
-       Sometimes wait.
+       =====================================
+       TWO PHOTOS
+       =====================================
     */
 
     if (count === 2) {
 
+        /*
+           Usually don't immediately add
+           a third photo.
+        */
+
         if (
-            Math.random() < 0.62
+            Math.random() < 0.30
         ) {
 
             return 1;
@@ -1082,8 +1131,9 @@ function determineBatchSize() {
 
 
     /*
-       Three photos:
-       never add another.
+       =====================================
+       THREE PHOTOS
+       =====================================
     */
 
     return 0;
@@ -1092,7 +1142,7 @@ function determineBatchSize() {
 
 
 /* =========================================================
-   EVENT
+   RUN EVENT
 ========================================================= */
 
 async function runEvent() {
@@ -1118,11 +1168,8 @@ async function runEvent() {
 
 
     /*
-       Prepare simultaneous photos
-       at the same time.
-
-       Each one still gets its own
-       position, size and lifetime.
+       Create simultaneous photos
+       independently.
     */
 
     const tasks = [];
@@ -1185,8 +1232,8 @@ function scheduleNextEvent() {
 
 
         /*
-           Never allow the page to remain
-           blank for long.
+           If somehow completely empty,
+           immediately rebuild.
         */
 
         if (
