@@ -34,9 +34,7 @@ body {
 .photo {
     position: absolute;
     display: block;
-
     object-fit: contain;
-
     user-select: none;
     -webkit-user-drag: none;
     pointer-events: none;
@@ -44,7 +42,7 @@ body {
 
 
 /* ================================
-   FULLSCREEN BUTTON
+   FULLSCREEN
 ================================ */
 
 #fullscreen {
@@ -62,7 +60,7 @@ body {
 
     background: transparent;
 
-    opacity: 0.16;
+    opacity: 0.14;
 
     z-index: 1000;
 
@@ -91,7 +89,6 @@ body {
 <body>
 
 <div id="journal"></div>
-
 
 <button id="fullscreen"
         aria-label="Fullscreen">
@@ -125,57 +122,70 @@ const API =
 "contents/photos/journal?ref=main";
 
 
-/*
-   Maximum number of photos visible.
-*/
-
 const MAX_PHOTOS = 3;
 
 
 /*
-   How long each photo stays visible
-   AFTER it has finished loading.
+   Each image lives independently
+   for 4–12 seconds AFTER appearing.
 */
 
 const MIN_LIFETIME = 4000;
-
 const MAX_LIFETIME = 12000;
 
 
 /*
-   Delay before trying to introduce
-   another photo.
+   Time between random events.
 */
 
-const MOBILE_MIN_DELAY = 2000;
-const MOBILE_MAX_DELAY = 5000;
+const MOBILE_MIN_DELAY = 1800;
+const MOBILE_MAX_DELAY = 4500;
 
 const DESKTOP_MIN_DELAY = 2000;
-const DESKTOP_MAX_DELAY = 7000;
+const DESKTOP_MAX_DELAY = 6000;
 
 
 /*
-   Probability of allowing overlap.
+   Base overlap probability.
 */
 
-const OVERLAP_CHANCE = 0.15;
+const BASE_OVERLAP_CHANCE = 0.15;
 
 
 /*
-   We prefer keeping the screen populated.
-
-   If there is only one photo,
-   the next appearance is almost guaranteed.
-
-   If there are two photos,
-   the probability is still high.
-
-   If there are three,
-   nothing is added.
+   When attempting to create the third
+   photo, overlap becomes more acceptable.
 */
 
-const ONE_PHOTO_CHANCE = 0.95;
-const TWO_PHOTO_CHANCE = 0.75;
+const THREE_PHOTO_OVERLAP_CHANCE = 0.30;
+
+
+/*
+   Probability of creating TWO photos
+   during one event.
+
+   This is modified dynamically depending
+   on what happened previously.
+*/
+
+const DOUBLE_BASE_CHANCE = 0.30;
+
+
+/*
+   Probability of creating THREE photos.
+
+   Deliberately very low.
+*/
+
+const TRIPLE_BASE_CHANCE = 0.07;
+
+
+/*
+   Rare immediate repetition of the
+   same photo.
+*/
+
+const IMMEDIATE_REPEAT_CHANCE = 0.08;
 
 
 /* =========================================
@@ -191,13 +201,9 @@ let activePhotos = [];
 
 let recentPhotos = [];
 
+let previousBatchSize = 0;
 
-/*
-   Prevent several spawn operations
-   from happening simultaneously.
-*/
-
-let loadingPhoto = false;
+let loading = false;
 
 
 /* =========================================
@@ -243,7 +249,7 @@ function preloadImage(src) {
         img.onerror = () => {
 
             /*
-               Don't remove the image
+               Failed images are NOT removed
                from the collection.
             */
 
@@ -301,18 +307,10 @@ async function loadPhotos() {
         );
 
 
-        /*
-           Immediately populate the screen.
-        */
-
-        await populateInitialScreen();
+        await fillInitialScreen();
 
 
-        /*
-           Then begin the organic cycle.
-        */
-
-        scheduleNextSpawn();
+        scheduleNextEvent();
 
 
     } catch (error) {
@@ -341,8 +339,11 @@ function choosePhoto() {
 
 
     /*
-       Avoid the same photo being selected
-       three times consecutively.
+       Normally exclude the last two
+       photos from the candidate pool.
+
+       This prevents three consecutive
+       appearances of the same image.
     */
 
     let candidates =
@@ -352,13 +353,45 @@ function choosePhoto() {
 
 
     /*
-       If the collection is very small,
-       relax the restriction.
+       If there are not enough candidates,
+       allow an immediate repeat only rarely.
     */
 
     if (candidates.length === 0) {
 
         candidates = [...photos];
+
+    }
+
+
+    /*
+       If there is a previous photo,
+       give it a small chance of being
+       selected again immediately.
+
+       This creates occasional repetition
+       without making it predictable.
+    */
+
+    if (
+        recentPhotos.length > 0 &&
+        Math.random() <
+        IMMEDIATE_REPEAT_CHANCE
+    ) {
+
+        const previous =
+        recentPhotos[
+            recentPhotos.length - 1
+        ];
+
+
+        if (
+            photos.includes(previous)
+        ) {
+
+            return previous;
+
+        }
 
     }
 
@@ -392,23 +425,40 @@ function overlaps(a, b) {
 
 
 /* =========================================
-   FIND POSITION
+   POSITION
 ========================================= */
 
-function findPosition(width, height) {
+function findPosition(
+    width,
+    height,
+    forceMoreOverlap = false
+) {
 
-    /*
-       Sometimes overlap is intentionally
-       permitted.
-    */
+    let overlapChance =
+    BASE_OVERLAP_CHANCE;
+
+
+    if (forceMoreOverlap) {
+
+        overlapChance =
+        THREE_PHOTO_OVERLAP_CHANCE;
+
+    }
+
 
     const allowOverlap =
-    Math.random() < OVERLAP_CHANCE;
+    Math.random() <
+    overlapChance;
 
+
+    /*
+       Try many positions before accepting
+       an overlap.
+    */
 
     for (
         let attempt = 0;
-        attempt < 100;
+        attempt < 200;
         attempt++
     ) {
 
@@ -432,7 +482,7 @@ function findPosition(width, height) {
 
 
         /*
-           Allow occasional overlap.
+           Intentional overlap.
         */
 
         if (allowOverlap) {
@@ -473,8 +523,8 @@ function findPosition(width, height) {
 
 
     /*
-       If no position can be found,
-       allow overlap.
+       If the screen genuinely has no
+       suitable free position, allow it.
     */
 
     return {
@@ -498,22 +548,21 @@ function findPosition(width, height) {
 
 
 /* =========================================
-   CREATE PHOTO
+   CREATE ONE PHOTO
 ========================================= */
 
-async function spawnPhoto() {
+async function spawnPhoto(
+    forceSmall = false
+) {
 
     if (
-        loadingPhoto ||
-        activePhotos.length >= MAX_PHOTOS
+        activePhotos.length >=
+        MAX_PHOTOS
     ) {
 
-        return;
+        return false;
 
     }
-
-
-    loadingPhoto = true;
 
 
     const src =
@@ -522,55 +571,42 @@ async function spawnPhoto() {
 
     if (!src) {
 
-        loadingPhoto = false;
-
-        return;
+        return false;
 
     }
 
 
     /*
-       Load the entire image BEFORE
-       displaying it.
+       Wait until the image is fully loaded.
     */
 
     const loaded =
     await preloadImage(src);
 
 
-    loadingPhoto = false;
-
-
     /*
-       Failed loading is simply ignored
-       for this attempt.
-
-       The photo remains in the list.
+       Do NOT remove failed images.
     */
 
     if (!loaded) {
 
-        return;
+        return false;
 
     }
 
 
-    /*
-       Another photo might have appeared
-       while this one was loading.
-    */
-
     if (
-        activePhotos.length >= MAX_PHOTOS
+        activePhotos.length >=
+        MAX_PHOTOS
     ) {
 
-        return;
+        return false;
 
     }
 
 
     /* =====================================
-       RANDOM SIZE
+       SIZE
     ===================================== */
 
     const mobile =
@@ -581,11 +617,32 @@ async function spawnPhoto() {
     let height;
 
 
-    if (mobile) {
+    /*
+       If we're creating the third image,
+       it needs to fit more easily.
+    */
 
-        /*
-           Larger average size on phones.
-        */
+    if (forceSmall) {
+
+        if (mobile) {
+
+            width =
+            random(28, 45);
+
+            height =
+            random(28, 45);
+
+        } else {
+
+            width =
+            random(24, 40);
+
+            height =
+            random(24, 45);
+
+        }
+
+    } else if (mobile) {
 
         width =
         random(42, 72);
@@ -604,11 +661,6 @@ async function spawnPhoto() {
     }
 
 
-    /*
-       Never let the bounding box exceed
-       the screen.
-    */
-
     width =
     Math.min(width, 88);
 
@@ -616,15 +668,22 @@ async function spawnPhoto() {
     Math.min(height, 88);
 
 
+    /*
+       If there are already two photos,
+       the third gets a slightly higher
+       chance of overlap.
+    */
+
     const position =
     findPosition(
         width,
-        height
+        height,
+        activePhotos.length >= 2
     );
 
 
     /* =====================================
-       CREATE ELEMENT
+       CREATE IMAGE
     ===================================== */
 
     const img =
@@ -634,10 +693,6 @@ async function spawnPhoto() {
     img.className =
     "photo";
 
-
-    /*
-       Already completely loaded.
-    */
 
     img.src =
     loaded.src;
@@ -663,12 +718,6 @@ async function spawnPhoto() {
     position.h + "%";
 
 
-    /*
-       Insert into page.
-
-       It appears immediately.
-    */
-
     journal.appendChild(img);
 
 
@@ -691,7 +740,9 @@ async function spawnPhoto() {
 
 
     /*
-       Remember last two photos.
+       Remember recent images.
+
+       Only the last two matter.
     */
 
     recentPhotos.push(src);
@@ -707,7 +758,7 @@ async function spawnPhoto() {
 
 
     /* =====================================
-       RANDOM LIFETIME
+       INDIVIDUAL LIFETIME
     ===================================== */
 
     const lifetime =
@@ -718,8 +769,7 @@ async function spawnPhoto() {
 
 
     /*
-       Countdown begins HERE,
-       after the image is visible.
+       Countdown starts only now.
     */
 
     setTimeout(() => {
@@ -736,6 +786,9 @@ async function spawnPhoto() {
 
     }, lifetime);
 
+
+    return true;
+
 }
 
 
@@ -743,20 +796,19 @@ async function spawnPhoto() {
    INITIAL SCREEN
 ========================================= */
 
-async function populateInitialScreen() {
+async function fillInitialScreen() {
 
     /*
-       Start with 2 or 3 photos.
+       Start with 2 or 3.
 
-       They are loaded one by one,
-       but each appears only when complete.
+       Three is common initially so
+       the phone doesn't begin empty.
     */
 
     const target =
-    Math.min(
-        photos.length,
-        Math.random() < 0.75 ? 3 : 2
-    );
+    Math.random() < 0.80
+    ? 3
+    : 2;
 
 
     for (
@@ -765,86 +817,275 @@ async function populateInitialScreen() {
         i++
     ) {
 
-        await spawnPhoto();
+        /*
+           If this is the third image,
+           allow it to be smaller.
+        */
+
+        await spawnPhoto(
+            i === 2
+        );
 
     }
+
+
+    previousBatchSize =
+    target;
 
 }
 
 
 /* =========================================
-   SHOULD SPAWN?
+   DETERMINE EVENT SIZE
 ========================================= */
 
-function shouldSpawn() {
+function determineBatchSize() {
 
     const count =
     activePhotos.length;
 
 
     /*
-       3 photos = no new photo.
+       If there are already 3,
+       nothing can be added.
     */
 
     if (
         count >= MAX_PHOTOS
     ) {
 
-        return false;
+        return 0;
 
     }
 
 
     /*
-       0 photos = always spawn.
+       Empty screen:
+       strongly favour 2,
+       occasionally 3.
     */
 
     if (count === 0) {
 
-        return true;
+        const r =
+        Math.random();
+
+
+        if (r < 0.12) {
+
+            return 3;
+
+        }
+
+
+        if (r < 0.82) {
+
+            return 2;
+
+        }
+
+
+        return 1;
 
     }
 
 
     /*
-       1 photo = very likely to add one.
+       One photo currently visible.
+
+       Usually create one,
+       sometimes create two.
     */
 
     if (count === 1) {
 
-        return (
+        let doubleChance =
+        DOUBLE_BASE_CHANCE;
+
+
+        /*
+           If the previous event already
+           created two, reduce the chance.
+        */
+
+        if (
+            previousBatchSize === 2
+        ) {
+
+            doubleChance *= 0.30;
+
+        }
+
+
+        /*
+           If the previous event created
+           three, make two even less likely.
+        */
+
+        if (
+            previousBatchSize === 3
+        ) {
+
+            doubleChance *= 0.45;
+
+        }
+
+
+        if (
             Math.random() <
-            ONE_PHOTO_CHANCE
-        );
+            doubleChance
+        ) {
+
+            return 2;
+
+        }
+
+
+        return 1;
 
     }
 
 
     /*
-       2 photos = likely to add one,
-       but not guaranteed.
+       Two photos currently visible.
+
+       Only one can be added.
+
+       It becomes the third photo.
     */
 
     if (count === 2) {
 
-        return (
-            Math.random() <
-            TWO_PHOTO_CHANCE
-        );
+        /*
+           Sometimes wait instead of
+           immediately filling the screen.
+        */
+
+        if (
+            Math.random() < 0.72
+        ) {
+
+            return 1;
+
+        }
+
+
+        return 0;
 
     }
 
 
-    return false;
+    return 0;
 
 }
 
 
 /* =========================================
-   SCHEDULE NEXT SPAWN
+   RUN EVENT
 ========================================= */
 
-function scheduleNextSpawn() {
+async function runEvent() {
+
+    if (loading) {
+
+        return;
+
+    }
+
+
+    loading = true;
+
+
+    let amount =
+    determineBatchSize();
+
+
+    /*
+       Never exceed three.
+    */
+
+    amount =
+    Math.min(
+        amount,
+        MAX_PHOTOS -
+        activePhotos.length
+    );
+
+
+    /*
+       If we're creating 3 photos in
+       one event, only do it when there
+       is enough room.
+    */
+
+    if (
+        amount === 3 &&
+        activePhotos.length > 0
+    ) {
+
+        amount = 2;
+
+    }
+
+
+    /*
+       Create the photos simultaneously.
+
+       They are each loaded independently,
+       so their lifetimes will also be
+       independent.
+    */
+
+    const tasks = [];
+
+
+    for (
+        let i = 0;
+        i < amount;
+        i++
+    ) {
+
+        /*
+           If this becomes the third photo,
+           make it smaller.
+        */
+
+        const willBeThird =
+        activePhotos.length +
+        i >= 2;
+
+
+        tasks.push(
+            spawnPhoto(willBeThird)
+        );
+
+    }
+
+
+    await Promise.all(tasks);
+
+
+    /*
+       Remember what kind of event
+       just happened.
+
+       This influences the next event.
+    */
+
+    previousBatchSize =
+    amount;
+
+
+    loading = false;
+
+}
+
+
+/* =========================================
+   SCHEDULE NEXT EVENT
+========================================= */
+
+function scheduleNextEvent() {
 
     const mobile =
     window.innerWidth < 600;
@@ -876,25 +1117,27 @@ function scheduleNextSpawn() {
 
 
         /*
-           If there is room, decide randomly
-           whether to add another photo.
+           Emergency protection against
+           a completely empty screen.
+
+           If everything disappeared,
+           immediately refill with 2–3.
         */
 
         if (
-            shouldSpawn()
+            activePhotos.length === 0
         ) {
 
-            await spawnPhoto();
+            await fillInitialScreen();
+
+        } else {
+
+            await runEvent();
 
         }
 
 
-        /*
-           Schedule the next independent
-           decision.
-        */
-
-        scheduleNextSpawn();
+        scheduleNextEvent();
 
 
     }, delay);
