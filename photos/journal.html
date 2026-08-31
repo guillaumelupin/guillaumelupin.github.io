@@ -1,13 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+
 <meta charset="UTF-8">
 
 <meta name="viewport"
-      content="width=device-width,
-               initial-scale=1.0,
-               maximum-scale=1.0,
-               user-scalable=no">
+content="width=device-width,
+initial-scale=1.0,
+maximum-scale=1.0,
+user-scalable=no">
 
 <style>
 
@@ -41,46 +42,134 @@ body {
     pointer-events: none;
 }
 
+
+/* --------------------------------
+   FULLSCREEN BUTTON
+-------------------------------- */
+
+#fullscreen {
+    position: fixed;
+
+    top: 12px;
+    right: 12px;
+
+    width: 28px;
+    height: 28px;
+
+    padding: 0;
+
+    border: none;
+
+    background: transparent;
+
+    opacity: 0.18;
+
+    cursor: pointer;
+
+    z-index: 1000;
+
+    transition: opacity 0.4s;
+}
+
+#fullscreen:hover {
+    opacity: 0.45;
+}
+
+#fullscreen svg {
+    width: 18px;
+    height: 18px;
+}
+
+
+/* Hide fullscreen button when
+   browser is already fullscreen */
+
+:fullscreen #fullscreen {
+    opacity: 0;
+}
+
 </style>
+
 </head>
 
 <body>
 
 <div id="journal"></div>
 
+
+<button id="fullscreen"
+        aria-label="Fullscreen">
+
+<svg viewBox="0 0 24 24"
+     fill="none"
+     stroke="currentColor"
+     stroke-width="1.5">
+
+<path d="M4 9V4h5"/>
+<path d="M20 9V4h-5"/>
+<path d="M4 15v5h5"/>
+<path d="M20 15v5h-5"/>
+
+</svg>
+
+</button>
+
+
 <script>
+
 
 /* =========================================
    SETTINGS
 ========================================= */
 
 const API =
-"https://api.github.com/repos/guillaumelupin/guillaumelupin.github.io/contents/photos/journal?ref=main";
+"https://api.github.com/repos/" +
+"guillaumelupin/" +
+"guillaumelupin.github.io/" +
+"contents/photos/journal?ref=main";
+
 
 const MAX_PHOTOS = 3;
 
+
+/*
+   Every 8 seconds we decide whether
+   another photo should appear.
+*/
+
 const CHECK_INTERVAL = 8000;
 
-const MIN_LIFETIME = 5000;
 
-const MAX_LIFETIME = 10000;
+/*
+   How long a photo remains visible
+   AFTER it has finished loading.
+*/
+
+const MIN_LIFETIME = 4000;
+
+const MAX_LIFETIME = 12000;
 
 
 /*
    Chance of adding a photo when
-   there is space available.
+   there is available space.
 
-   This value is recalculated randomly
-   every 8 seconds.
+   Mobile gets a slightly higher
+   probability.
 */
-const MIN_SPAWN_CHANCE = 0.35;
-const MAX_SPAWN_CHANCE = 0.80;
+
+const DESKTOP_MIN_CHANCE = 0.45;
+const DESKTOP_MAX_CHANCE = 0.75;
+
+const MOBILE_MIN_CHANCE = 0.60;
+const MOBILE_MAX_CHANCE = 0.90;
 
 
 /*
-   Probability of allowing overlap.
+   Rare overlap.
 */
-const OVERLAP_CHANCE = 0.15;
+
+const OVERLAP_CHANCE = 0.12;
 
 
 /* =========================================
@@ -88,7 +177,7 @@ const OVERLAP_CHANCE = 0.15;
 ========================================= */
 
 const journal =
-    document.getElementById("journal");
+document.getElementById("journal");
 
 let photos = [];
 
@@ -103,7 +192,8 @@ let recentPhotos = [];
 
 function random(min, max) {
 
-    return Math.random() * (max - min) + min;
+    return Math.random() *
+    (max - min) + min;
 
 }
 
@@ -131,72 +221,14 @@ function shuffle(array) {
 
 
 /* =========================================
-   LOAD PHOTO LIST
-========================================= */
-
-async function loadPhotos() {
-
-    try {
-
-        const response =
-            await fetch(API);
-
-        if (!response.ok) {
-            throw new Error(
-                "GitHub API error"
-            );
-        }
-
-        const files =
-            await response.json();
-
-
-        photos = files
-
-            .filter(file =>
-                file.type === "file" &&
-                /\.(jpg|jpeg|png|webp|gif)$/i
-                    .test(file.name)
-            )
-
-            .map(file =>
-                "https://raw.githubusercontent.com/" +
-                "guillaumelupin/" +
-                "guillaumelupin.github.io/" +
-                "main/photos/journal/" +
-                encodeURIComponent(file.name)
-            );
-
-
-        /*
-           Start the Journal.
-        */
-
-        trySpawnPhoto();
-
-
-    } catch (error) {
-
-        console.error(
-            "Could not load Journal photos:",
-            error
-        );
-
-    }
-
-}
-
-
-/* =========================================
-   PRELOAD IMAGE
+   PRELOAD
 ========================================= */
 
 function preloadImage(src) {
 
     return new Promise(resolve => {
 
-        const img =
-            new Image();
+        const img = new Image();
 
 
         img.onload = () => {
@@ -208,14 +240,6 @@ function preloadImage(src) {
 
         img.onerror = () => {
 
-            /*
-               Do NOT remove the photo
-               from the collection.
-
-               We simply don't display it
-               this time.
-            */
-
             resolve(null);
 
         };
@@ -224,6 +248,68 @@ function preloadImage(src) {
         img.src = src;
 
     });
+
+}
+
+
+/* =========================================
+   LOAD PHOTO LIST
+========================================= */
+
+async function loadPhotos() {
+
+    try {
+
+        const response =
+        await fetch(API);
+
+
+        if (!response.ok) {
+
+            throw new Error(
+                "GitHub API error"
+            );
+
+        }
+
+
+        const files =
+        await response.json();
+
+
+        photos = files
+
+        .filter(file =>
+            file.type === "file" &&
+            /\.(jpg|jpeg|png|webp|gif)$/i
+            .test(file.name)
+        )
+
+        .map(file =>
+            "https://raw.githubusercontent.com/" +
+            "guillaumelupin/" +
+            "guillaumelupin.github.io/" +
+            "main/photos/journal/" +
+            encodeURIComponent(file.name)
+        );
+
+
+        /*
+           Immediately create an initial
+           group so the screen isn't empty.
+        */
+
+        await initialLoad();
+
+
+    } catch (error) {
+
+        console.error(
+            "Could not load Journal:",
+            error
+        );
+
+    }
 
 }
 
@@ -240,22 +326,20 @@ function choosePhoto() {
 
 
     /*
-       Avoid the same photo appearing
-       three times consecutively.
-
-       We remember the last two selected
-       photos.
+       Don't allow the same photo to be
+       selected for three consecutive
+       appearances.
     */
 
     let candidates =
-        photos.filter(src =>
-            !recentPhotos.includes(src)
-        );
+    photos.filter(src =>
+        !recentPhotos.includes(src)
+    );
 
 
     /*
        If the collection is too small,
-       relax the rule.
+       relax the restriction.
     */
 
     if (candidates.length === 0) {
@@ -294,34 +378,32 @@ function overlaps(a, b) {
 
 
 /* =========================================
-   FIND POSITION
+   POSITION
 ========================================= */
 
 function findPosition(width, height) {
 
-    /*
-       15% chance of allowing overlap.
-    */
-
     const allowOverlap =
-        Math.random() < OVERLAP_CHANCE;
+    Math.random() < OVERLAP_CHANCE;
 
 
-    for (let attempt = 0;
-         attempt < 100;
-         attempt++) {
+    for (
+        let attempt = 0;
+        attempt < 100;
+        attempt++
+    ) {
 
 
         const position = {
 
             x: random(
-                1,
-                99 - width
+                2,
+                98 - width
             ),
 
             y: random(
-                1,
-                99 - height
+                2,
+                98 - height
             ),
 
             w: width,
@@ -331,8 +413,7 @@ function findPosition(width, height) {
 
 
         /*
-           If overlap is allowed,
-           accept immediately.
+           Occasionally allow overlap.
         */
 
         if (allowOverlap) {
@@ -341,11 +422,6 @@ function findPosition(width, height) {
 
         }
 
-
-        /*
-           Otherwise check every
-           currently visible photo.
-        */
 
         let collision = false;
 
@@ -378,20 +454,20 @@ function findPosition(width, height) {
 
 
     /*
-       If we cannot find a free space,
-       allow overlap anyway.
+       If no free position was found,
+       allow overlap.
     */
 
     return {
 
         x: random(
-            1,
-            99 - width
+            2,
+            98 - width
         ),
 
         y: random(
-            1,
-            99 - height
+            2,
+            98 - height
         ),
 
         w: width,
@@ -403,20 +479,23 @@ function findPosition(width, height) {
 
 
 /* =========================================
-   CREATE PHOTO
+   SPAWN PHOTO
 ========================================= */
 
 async function spawnPhoto() {
 
     if (
-        activePhotos.length >= MAX_PHOTOS
+        activePhotos.length >=
+        MAX_PHOTOS
     ) {
+
         return;
+
     }
 
 
     const src =
-        choosePhoto();
+    choosePhoto();
 
 
     if (!src) {
@@ -425,154 +504,137 @@ async function spawnPhoto() {
 
 
     /*
-       IMPORTANT:
-
-       The image is completely loaded
-       BEFORE it gets inserted into
-       the page.
+       WAIT FOR COMPLETE LOAD
     */
 
     const loaded =
-        await preloadImage(src);
+    await preloadImage(src);
 
 
     /*
-       If loading failed, don't delete
-       the image from the collection.
-
-       Simply wait for the next attempt.
+       Failed images are NOT removed.
     */
 
     if (!loaded) {
+
         return;
+
     }
 
 
     /*
-       Re-check the limit because another
-       photo may have appeared while this
-       one was loading.
+       Check again after loading.
     */
 
     if (
-        activePhotos.length >= MAX_PHOTOS
+        activePhotos.length >=
+        MAX_PHOTOS
     ) {
+
         return;
+
     }
 
 
     /* =====================================
-       RANDOM SIZE
+       SIZE
     ===================================== */
-
-
-    /*
-       Photos are deliberately fairly large.
-
-       The actual image will still preserve
-       its proportions because object-fit is
-       contain.
-    */
 
     let width;
     let height;
 
 
-    if (
-        window.innerWidth >
-        window.innerHeight
-    ) {
+    const mobile =
+    window.innerWidth <
+    600;
+
+
+    if (mobile) {
 
         /*
-           Computer / landscape
+           Larger on phones.
         */
 
         width =
-            random(28, 52);
+        random(42, 72);
 
         height =
-            random(28, 62);
+        random(35, 65);
 
     } else {
 
-        /*
-           Phone / portrait
-        */
-
         width =
-            random(38, 68);
+        random(30, 55);
 
         height =
-            random(28, 55);
+        random(30, 65);
 
     }
 
 
     /*
-       Make sure the image cannot exceed
-       the screen.
+       Never exceed the screen.
     */
 
     width =
-        Math.min(width, 88);
+    Math.min(width, 88);
 
     height =
-        Math.min(height, 88);
+    Math.min(height, 88);
 
 
     const position =
-        findPosition(
-            width,
-            height
-        );
+    findPosition(
+        width,
+        height
+    );
 
 
     /* =====================================
-       CREATE DOM ELEMENT
+       DISPLAY
     ===================================== */
 
     const img =
-        document.createElement("img");
+    document.createElement("img");
 
 
     img.className =
-        "photo";
+    "photo";
 
 
     /*
-       Use the already loaded image
-       directly.
+       The image has already been loaded.
     */
 
     img.src =
-        loaded.src;
+    loaded.src;
 
 
     img.draggable =
-        false;
+    false;
 
 
     img.style.left =
-        position.x + "%";
+    position.x + "%";
 
 
     img.style.top =
-        position.y + "%";
+    position.y + "%";
 
 
     img.style.width =
-        position.w + "%";
+    position.w + "%";
 
 
     img.style.height =
-        position.h + "%";
+    position.h + "%";
 
 
     journal.appendChild(img);
 
 
     /* =====================================
-       REGISTER ACTIVE PHOTO
+       REGISTER
     ===================================== */
 
     const active = {
@@ -590,15 +652,15 @@ async function spawnPhoto() {
 
 
     /*
-       Remember this photo.
-
-       Keep only the last two.
+       Remember recent photos.
     */
 
     recentPhotos.push(src);
 
 
-    if (recentPhotos.length > 2) {
+    if (
+        recentPhotos.length > 2
+    ) {
 
         recentPhotos.shift();
 
@@ -606,34 +668,34 @@ async function spawnPhoto() {
 
 
     /* =====================================
-       RANDOM LIFETIME
+       LIFETIME
     ===================================== */
 
     const lifetime =
-        random(
-            MIN_LIFETIME,
-            MAX_LIFETIME
-        );
+    random(
+        MIN_LIFETIME,
+        MAX_LIFETIME
+    );
 
+
+    /*
+       IMPORTANT:
+
+       This countdown starts NOW,
+       after the image has completely
+       loaded and appeared.
+    */
 
     setTimeout(() => {
-
-        /*
-           Remove from screen.
-        */
 
         img.remove();
 
 
-        /*
-           Remove from active list.
-        */
-
         activePhotos =
-            activePhotos.filter(
-                item =>
-                    item !== active
-            );
+        activePhotos.filter(
+            item =>
+            item !== active
+        );
 
 
     }, lifetime);
@@ -642,17 +704,47 @@ async function spawnPhoto() {
 
 
 /* =========================================
-   SPAWN DECISION
+   INITIAL LOAD
+========================================= */
+
+async function initialLoad() {
+
+    /*
+       Start with 1–3 photos.
+
+       They are loaded BEFORE being
+       displayed.
+    */
+
+    const number =
+    Math.min(
+        photos.length,
+        randomInt(1, 3)
+    );
+
+
+    for (
+        let i = 0;
+        i < number;
+        i++
+    ) {
+
+        await spawnPhoto();
+
+    }
+
+}
+
+
+/* =========================================
+   PERIODIC SPAWN
 ========================================= */
 
 function trySpawnPhoto() {
 
-    /*
-       Never exceed three photos.
-    */
-
     if (
-        activePhotos.length >= MAX_PHOTOS
+        activePhotos.length >=
+        MAX_PHOTOS
     ) {
 
         return;
@@ -660,23 +752,36 @@ function trySpawnPhoto() {
     }
 
 
-    /*
-       New random probability every cycle.
-    */
+    const mobile =
+    window.innerWidth <
+    600;
 
-    const chance =
+
+    let chance;
+
+
+    if (mobile) {
+
+        chance =
         random(
-            MIN_SPAWN_CHANCE,
-            MAX_SPAWN_CHANCE
+            MOBILE_MIN_CHANCE,
+            MOBILE_MAX_CHANCE
         );
 
+    } else {
 
-    /*
-       Decide whether to add one.
-    */
+        chance =
+        random(
+            DESKTOP_MIN_CHANCE,
+            DESKTOP_MAX_CHANCE
+        );
+
+    }
+
 
     if (
-        Math.random() < chance
+        Math.random() <
+        chance
     ) {
 
         spawnPhoto();
@@ -693,16 +798,80 @@ function trySpawnPhoto() {
 loadPhotos();
 
 
+setInterval(
+    trySpawnPhoto,
+    CHECK_INTERVAL
+);
+
+
+/* =========================================
+   FULLSCREEN
+========================================= */
+
+const fullscreenButton =
+document.getElementById(
+    "fullscreen"
+);
+
+
+fullscreenButton.addEventListener(
+    "click",
+    async () => {
+
+        try {
+
+            if (
+                !document.fullscreenElement
+            ) {
+
+                await document.documentElement
+                .requestFullscreen();
+
+            } else {
+
+                await document.exitFullscreen();
+
+            }
+
+        } catch (error) {
+
+            console.error(
+                "Fullscreen unavailable:",
+                error
+            );
+
+        }
+
+    }
+);
+
+
 /*
-   Every 8 seconds we reconsider
-   whether a new photo should appear.
+   On mobile browsers, fullscreen can
+   sometimes be exited with the browser's
+   own controls. Keep button state simple.
 */
 
-setInterval(() => {
+document.addEventListener(
+    "fullscreenchange",
+    () => {
 
-    trySpawnPhoto();
+        if (
+            document.fullscreenElement
+        ) {
 
-}, CHECK_INTERVAL);
+            fullscreenButton.style.opacity =
+            "0";
+
+        } else {
+
+            fullscreenButton.style.opacity =
+            "0.18";
+
+        }
+
+    }
+);
 
 </script>
 
