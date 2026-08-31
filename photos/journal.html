@@ -71,31 +71,60 @@ body {
 <button id="next" class="nav"></button>
 
 <script>
-const photos = [
-    "journal/photo1.jpg",
-    "journal/photo2.jpg",
-    "journal/photo3.jpg"
-];
+
+const GITHUB_API =
+    "https://api.github.com/repos/guillaumelupin/guillaumelupin.github.io/contents/photos/journal";
+
+let photos = [];
+let order = [];
+let current = 0;
 
 const photo = document.getElementById("photo");
 const previous = document.getElementById("previous");
 const next = document.getElementById("next");
 
-let order = [...photos].sort(() => Math.random() - 0.5);
-let current = 0;
+
+async function loadPhotos() {
+
+    const response = await fetch(GITHUB_API);
+    const files = await response.json();
+
+    photos = files
+        .filter(file => {
+            return /\.(jpg|jpeg|png|webp|gif)$/i.test(file.name);
+        })
+        .map(file => file.download_url);
+
+    order = [...photos].sort(() => Math.random() - 0.5);
+
+    current = 0;
+
+    showPhoto();
+    automatic();
+}
+
 
 function showPhoto() {
+
+    if (order.length === 0) {
+        return;
+    }
+
     photo.src = order[current];
 
     const size = 0.92 + Math.random() * 0.08;
+
     photo.style.maxWidth = (88 * size) + "vw";
     photo.style.maxHeight = (88 * size) + "vh";
 }
 
+
 function nextPhoto() {
+
     current++;
 
     if (current >= order.length) {
+
         order = [...photos].sort(() => Math.random() - 0.5);
         current = 0;
     }
@@ -103,7 +132,9 @@ function nextPhoto() {
     showPhoto();
 }
 
+
 function previousPhoto() {
+
     current--;
 
     if (current < 0) {
@@ -113,25 +144,35 @@ function previousPhoto() {
     showPhoto();
 }
 
+
 next.addEventListener("click", nextPhoto);
 previous.addEventListener("click", previousPhoto);
 
+
 function automatic() {
+
     const delay = 5000 + Math.random() * 6000;
 
     setTimeout(() => {
+
         nextPhoto();
         automatic();
+
     }, delay);
 }
+
 
 let startX = 0;
 
 document.addEventListener("touchstart", event => {
+
     startX = event.touches[0].clientX;
+
 });
 
+
 document.addEventListener("touchend", event => {
+
     const endX = event.changedTouches[0].clientX;
     const distance = endX - startX;
 
@@ -144,10 +185,12 @@ document.addEventListener("touchend", event => {
     } else {
         previousPhoto();
     }
+
 });
 
-showPhoto();
-automatic();
+
+loadPhotos();
+
 </script>
 
 </body>
