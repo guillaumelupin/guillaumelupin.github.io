@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
 
 <meta charset="UTF-8">
@@ -14,68 +15,118 @@ user-scalable=no">
 
 html,
 body {
+
     margin: 0;
     padding: 0;
+
     width: 100%;
     height: 100%;
+
     overflow: hidden;
-    background: #ffffff;
+
+    background: white;
+
     touch-action: none;
 }
 
+
 #journal {
+
     position: fixed;
+
     inset: 0;
+
     width: 100vw;
     height: 100vh;
+
     overflow: hidden;
+
 }
+
+
+/* -----------------------------------------
+   PHOTOS
+----------------------------------------- */
 
 .photo {
+
     position: absolute;
+
     display: block;
+
     object-fit: contain;
+
     user-select: none;
+
     -webkit-user-drag: none;
+
     pointer-events: none;
+
 }
+
+
+/* -----------------------------------------
+   FULLSCREEN
+----------------------------------------- */
 
 #fullscreen {
+
     position: fixed;
+
     top: 12px;
     right: 12px;
+
     width: 28px;
     height: 28px;
+
     padding: 0;
+
     border: none;
+
     background: transparent;
-    opacity: 0.08;
+
+    opacity: 0.07;
+
     z-index: 1000;
+
     cursor: pointer;
+
 }
+
 
 #fullscreen:hover {
-    opacity: 0.3;
+
+    opacity: 0.25;
+
 }
+
 
 #fullscreen svg {
+
     width: 18px;
     height: 18px;
+
 }
 
+
 :fullscreen #fullscreen {
+
     opacity: 0;
+
 }
 
 </style>
 
 </head>
 
+
 <body>
+
 
 <div id="journal"></div>
 
-<button id="fullscreen" aria-label="Fullscreen">
+
+<button id="fullscreen">
 
 <svg viewBox="0 0 24 24"
      fill="none"
@@ -96,7 +147,7 @@ body {
 
 
 /* =========================================================
-   GITHUB FOLDER
+   GITHUB
 ========================================================= */
 
 const API =
@@ -107,86 +158,60 @@ const API =
 
 
 /* =========================================================
-   GENERAL
+   SETTINGS
 ========================================================= */
 
 const MAX_PHOTOS = 3;
 
 
-/* =========================================================
-   PHOTO LIFETIME
-========================================================= */
+/*
+   How long a photo remains visible.
 
-const MIN_LIFETIME = 5500;
-const MAX_LIFETIME = 15000;
+   The timer starts AFTER the image
+   has completely loaded.
+*/
+
+const MIN_LIFETIME = 5000;
+
+const MAX_LIFETIME = 14000;
 
 
 /*
-   Extremely rare long lifetime.
+   Very rare long appearance.
 */
 
-const RARE_LIFETIME_CHANCE = 0.02;
-const RARE_MAX_LIFETIME = 20000;
+const RARE_LONG_CHANCE = 0.025;
 
-
-/* =========================================================
-   TIME BETWEEN EVENTS
-========================================================= */
-
-const MOBILE_MIN_DELAY = 2500;
-const MOBILE_MAX_DELAY = 5500;
-
-const DESKTOP_MIN_DELAY = 2800;
-const DESKTOP_MAX_DELAY = 6500;
-
-
-/* =========================================================
-   NUMBER OF PHOTOS
-========================================================= */
-
-/*
-   One photo is deliberately dominant.
-
-   Two photos are common.
-
-   Three photos are rare.
-*/
-
-const DOUBLE_CHANCE = 0.25;
-const TRIPLE_CHANCE = 0.025;
-
-
-/* =========================================================
-   OVERLAP
-========================================================= */
-
-/*
-   Almost everything should NOT overlap.
-*/
-
-const BASE_OVERLAP_CHANCE = 0.025;
+const RARE_LONG_MAX = 20000;
 
 
 /*
-   Slightly higher when trying to fit
-   a third photo.
+   Time between decisions.
+
+   This is NOT the lifetime of the photos.
+
+   It simply determines when the system
+   asks itself whether something should happen.
 */
 
-const THREE_PHOTO_OVERLAP_CHANCE = 0.07;
+const MIN_EVENT_DELAY = 1800;
+
+const MAX_EVENT_DELAY = 4300;
 
 
 /*
-   Extremely rare "shiny" overlap.
+   Overlap.
+
+   Normally almost forbidden.
+
+   Rarely allowed.
 */
 
-const RARE_OVERLAP_CHANCE = 0.004;
+const NORMAL_OVERLAP = 0.035;
 
+const THREE_PHOTO_OVERLAP = 0.06;
 
-/* =========================================================
-   RARE COMPOSITIONS
-========================================================= */
-
-const RARE_COMPOSITION_CHANCE = 0.02;
+const RARE_OVERLAP = 0.008;
 
 
 /* =========================================================
@@ -196,13 +221,21 @@ const RARE_COMPOSITION_CHANCE = 0.02;
 const journal =
 document.getElementById("journal");
 
+
 let photos = [];
+
 
 let activePhotos = [];
 
+
+/*
+   Recently displayed photos.
+
+   Used only to discourage repetition.
+*/
+
 let recentPhotos = [];
 
-let previousBatchSize = 0;
 
 let loading = false;
 
@@ -214,7 +247,7 @@ let loading = false;
 function random(min, max) {
 
     return Math.random() *
-    (max - min) + min;
+        (max - min) + min;
 
 }
 
@@ -238,13 +271,26 @@ function preloadImage(src) {
 
         const img = new Image();
 
+
         img.onload = () => {
+
             resolve(img);
+
         };
 
+
         img.onerror = () => {
+
+            /*
+               The photo stays in the list.
+
+               It can be attempted again later.
+            */
+
             resolve(null);
+
         };
+
 
         img.src = src;
 
@@ -254,7 +300,7 @@ function preloadImage(src) {
 
 
 /* =========================================================
-   LOAD PHOTOS
+   LOAD GITHUB FILES
 ========================================================= */
 
 async function loadPhotos() {
@@ -262,7 +308,8 @@ async function loadPhotos() {
     try {
 
         const response =
-        await fetch(API);
+            await fetch(API);
+
 
         if (!response.ok) {
 
@@ -272,36 +319,56 @@ async function loadPhotos() {
 
         }
 
+
         const files =
-        await response.json();
+            await response.json();
 
 
         photos = files
 
-        .filter(file =>
-            file.type === "file" &&
-            /\.(jpg|jpeg|png|webp|gif)$/i
-            .test(file.name)
-        )
+            .filter(file =>
 
-        .map(file =>
-            "https://raw.githubusercontent.com/" +
-            "guillaumelupin/" +
-            "guillaumelupin.github.io/" +
-            "main/photos/journal/" +
-            encodeURIComponent(file.name)
-        );
+                file.type === "file" &&
+
+                /\.(jpg|jpeg|png|webp|gif)$/i
+                    .test(file.name)
+
+            )
+
+            .map(file =>
+
+                "https://raw.githubusercontent.com/" +
+
+                "guillaumelupin/" +
+
+                "guillaumelupin.github.io/" +
+
+                "main/photos/journal/" +
+
+                encodeURIComponent(file.name)
+
+            );
 
 
-        await fillInitialScreen();
+        /*
+           Create the first composition.
 
-        scheduleNextEvent();
+           It is deliberately biased toward
+           one or two photos.
+        */
+
+        await createInitialComposition();
 
 
-    } catch (error) {
+        scheduleEvent();
+
+
+    }
+
+    catch (error) {
 
         console.error(
-            "Could not load Journal:",
+            "Journal loading error:",
             error
         );
 
@@ -316,17 +383,12 @@ async function loadPhotos() {
 
 function choosePhoto() {
 
-    if (photos.length === 0) {
+    if (!photos.length) {
+
         return null;
+
     }
 
-
-    /*
-       Every photo remains available.
-
-       Recent photos receive a probability
-       penalty rather than being excluded.
-    */
 
     const weighted = [];
 
@@ -337,37 +399,43 @@ function choosePhoto() {
 
 
         /*
-           Last displayed photo:
-           very unlikely.
+           Last photo:
+           extremely unlikely.
         */
 
         if (
+
             recentPhotos.length >= 1 &&
+
             src ===
             recentPhotos[
                 recentPhotos.length - 1
             ]
+
         ) {
 
-            weight = 1;
+            weight = 2;
 
         }
 
 
         /*
-           Previous photo:
-           somewhat unlikely.
+           Second most recent:
+           discouraged but still possible.
         */
 
         else if (
+
             recentPhotos.length >= 2 &&
+
             src ===
             recentPhotos[
                 recentPhotos.length - 2
             ]
+
         ) {
 
-            weight = 12;
+            weight = 20;
 
         }
 
@@ -386,28 +454,34 @@ function choosePhoto() {
 
 
     /*
-       Extremely rare immediate repetition.
+       Very rare immediate repetition.
 
-       Three consecutive repetitions
-       remain impossible.
+       Never allow the same image three
+       times consecutively.
     */
 
     if (
+
         recentPhotos.length > 0 &&
-        Math.random() < 0.015
+
+        Math.random() < 0.02
+
     ) {
 
         const previous =
-        recentPhotos[
-            recentPhotos.length - 1
-        ];
+            recentPhotos[
+                recentPhotos.length - 1
+            ];
 
 
         if (
+
             recentPhotos.length < 2 ||
+
             recentPhotos[
                 recentPhotos.length - 2
             ] !== previous
+
         ) {
 
             return previous;
@@ -428,17 +502,24 @@ function choosePhoto() {
 
 
 /* =========================================================
-   RECTANGLE COLLISION
+   COLLISION
 ========================================================= */
 
 function overlaps(a, b) {
 
     return (
 
-        a.x < b.x + b.w &&
-        a.x + a.w > b.x &&
-        a.y < b.y + b.h &&
-        a.y + a.h > b.y
+        a.x <
+            b.x + b.w &&
+
+        a.x + a.w >
+            b.x &&
+
+        a.y <
+            b.y + b.h &&
+
+        a.y + a.h >
+            b.y
 
     );
 
@@ -446,74 +527,58 @@ function overlaps(a, b) {
 
 
 /* =========================================================
-   FIND POSITION
+   POSITION
 ========================================================= */
 
 function findPosition(
     width,
     height,
-    thirdPhoto = false
+    allowOverlap
 ) {
 
 
     /*
-       Normal overlap probability.
+       Normally overlap is almost impossible.
+
+       This is intentionally MUCH lower than
+       the previous versions.
     */
 
     let overlapChance =
-    BASE_OVERLAP_CHANCE;
+        allowOverlap
+            ? THREE_PHOTO_OVERLAP
+            : NORMAL_OVERLAP;
 
 
     /*
-       Third photos get slightly more
-       tolerance because available space
-       is naturally smaller.
-    */
-
-    if (thirdPhoto) {
-
-        overlapChance =
-        THREE_PHOTO_OVERLAP_CHANCE;
-
-    }
-
-
-    /*
-       Extremely rare unusual overlap.
+       Extremely rare unusual composition.
     */
 
     if (
         Math.random() <
-        RARE_OVERLAP_CHANCE
+        RARE_OVERLAP
     ) {
 
-        overlapChance = 0.30;
+        overlapChance = 0.25;
 
     }
 
 
-    const intentionalOverlap =
-    Math.random() <
-    overlapChance;
+    const shouldOverlap =
+        Math.random() <
+        overlapChance;
 
 
     /*
-       =====================================================
-       MOST IMPORTANT PART:
+       Try hundreds of positions.
 
-       Try MANY positions.
-
-       The existing photos create protected
-       zones.
-
-       We therefore strongly prefer completely
-       empty white space.
-       =====================================================
+       Existing images therefore create
+       protected areas.
     */
 
     for (
         let attempt = 0;
-        attempt < 600;
+        attempt < 500;
         attempt++
     ) {
 
@@ -531,16 +596,17 @@ function findPosition(
             ),
 
             w: width,
+
             h: height
 
         };
 
 
         /*
-           Intentional rare overlap.
+           Rare intentional overlap.
         */
 
-        if (intentionalOverlap) {
+        if (shouldOverlap) {
 
             return position;
 
@@ -551,7 +617,8 @@ function findPosition(
 
 
         for (
-            const active of activePhotos
+            const active
+            of activePhotos
         ) {
 
             if (
@@ -570,11 +637,6 @@ function findPosition(
         }
 
 
-        /*
-           Only accept if the entire
-           rectangle is in free space.
-        */
-
         if (!collision) {
 
             return position;
@@ -585,8 +647,9 @@ function findPosition(
 
 
     /*
-       If the screen genuinely has no room,
-       don't force a new image.
+       If there genuinely isn't enough
+       free space, return null instead
+       of forcing an ugly composition.
     */
 
     return null;
@@ -598,62 +661,33 @@ function findPosition(
    PHOTO SIZE
 ========================================================= */
 
-function getPhotoSize(
-    isThirdPhoto = false
+function getSize(
+    numberAlreadyOnScreen
 ) {
 
     const mobile =
-    window.innerWidth < 600;
-
-
-    /*
-       =====================================
-       VERY RARE GIANT PHOTO
-       =====================================
-    */
-
-    if (
-        Math.random() <
-        RARE_COMPOSITION_CHANCE &&
-        activePhotos.length === 0
-    ) {
-
-        return {
-
-            width: mobile
-                ? random(78, 91)
-                : random(68, 88),
-
-            height: mobile
-                ? random(75, 92)
-                : random(68, 90)
-
-        };
-
-    }
+        window.innerWidth < 600;
 
 
     /*
        =====================================
        THIRD PHOTO
        =====================================
-
-       Three photos should only happen
-       when they can remain relatively
-       small and separated.
     */
 
-    if (isThirdPhoto) {
+    if (
+        numberAlreadyOnScreen >= 2
+    ) {
 
         return {
 
             width: mobile
-                ? random(25, 38)
-                : random(22, 35),
+                ? random(27, 40)
+                : random(24, 37),
 
             height: mobile
-                ? random(24, 40)
-                : random(23, 39)
+                ? random(27, 42)
+                : random(25, 40)
 
         };
 
@@ -662,21 +696,32 @@ function getPhotoSize(
 
     /*
        =====================================
-       NORMAL MOBILE
+       NORMAL PHOTOS
        =====================================
+
+       Large sizes are deliberately much
+       more common than small sizes.
     */
 
-    if (mobile) {
 
-        /*
-           Larger average size.
-        */
+    const r = Math.random();
+
+
+    /*
+       15% medium.
+    */
+
+    if (r < 0.15) {
 
         return {
 
-            width: random(52, 79),
+            width: mobile
+                ? random(43, 57)
+                : random(34, 47),
 
-            height: random(45, 73)
+            height: mobile
+                ? random(42, 58)
+                : random(38, 53)
 
         };
 
@@ -684,16 +729,18 @@ function getPhotoSize(
 
 
     /*
-       =====================================
-       NORMAL DESKTOP
-       =====================================
+       85% large.
     */
 
     return {
 
-        width: random(38, 64),
+        width: mobile
+            ? random(55, 82)
+            : random(42, 68),
 
-        height: random(38, 72)
+        height: mobile
+            ? random(52, 78)
+            : random(43, 72)
 
     };
 
@@ -707,17 +754,17 @@ function getPhotoSize(
 function getLifetime() {
 
     /*
-       Rare long-lasting photo.
+       Very rare 15–20 second image.
     */
 
     if (
         Math.random() <
-        RARE_LIFETIME_CHANCE
+        RARE_LONG_CHANCE
     ) {
 
         return random(
-            MAX_LIFETIME,
-            RARE_MAX_LIFETIME
+            15000,
+            RARE_LONG_MAX
         );
 
     }
@@ -732,12 +779,10 @@ function getLifetime() {
 
 
 /* =========================================================
-   CREATE PHOTO
+   SPAWN PHOTO
 ========================================================= */
 
-async function spawnPhoto(
-    isThirdPhoto = false
-) {
+async function spawnPhoto() {
 
     if (
         activePhotos.length >=
@@ -750,27 +795,28 @@ async function spawnPhoto(
 
 
     const src =
-    choosePhoto();
+        choosePhoto();
 
 
     if (!src) {
+
         return false;
+
     }
 
 
     /*
-       Fully load before displaying.
+       IMPORTANT:
+
+       Nothing appears until the image
+       has completely loaded.
     */
 
     const loaded =
-    await preloadImage(src);
+        await preloadImage(src);
 
 
     if (!loaded) {
-
-        /*
-           Keep the image in the collection.
-        */
 
         return false;
 
@@ -788,23 +834,27 @@ async function spawnPhoto(
 
 
     const size =
-    getPhotoSize(
-        isThirdPhoto
-    );
+        getSize(
+            activePhotos.length
+        );
 
 
     const position =
-    findPosition(
-        size.width,
-        size.height,
-        isThirdPhoto
-    );
+        findPosition(
+
+            size.width,
+
+            size.height,
+
+            activePhotos.length >= 2
+
+        );
 
 
     /*
-       No suitable white space.
-       Do nothing rather than forcing
-       overlap.
+       No suitable free space.
+
+       Don't add the image.
     */
 
     if (!position) {
@@ -815,35 +865,35 @@ async function spawnPhoto(
 
 
     const img =
-    document.createElement("img");
+        document.createElement("img");
 
 
     img.className =
-    "photo";
+        "photo";
 
 
     img.src =
-    loaded.src;
+        loaded.src;
 
 
     img.draggable =
-    false;
+        false;
 
 
     img.style.left =
-    position.x + "%";
+        position.x + "%";
 
 
     img.style.top =
-    position.y + "%";
+        position.y + "%";
 
 
     img.style.width =
-    position.w + "%";
+        position.w + "%";
 
 
     img.style.height =
-    position.h + "%";
+        position.h + "%";
 
 
     journal.appendChild(img);
@@ -864,7 +914,7 @@ async function spawnPhoto(
 
 
     /*
-       Remember recently displayed photos.
+       Remember image.
     */
 
     recentPhotos.push(src);
@@ -880,24 +930,43 @@ async function spawnPhoto(
 
 
     /*
-       The timer starts ONLY once
-       the image is actually visible.
+       TIMER STARTS HERE.
+
+       The image has already loaded
+       and is now visible.
     */
 
     const lifetime =
-    getLifetime();
+        getLifetime();
 
 
     setTimeout(() => {
+
 
         img.remove();
 
 
         activePhotos =
-        activePhotos.filter(
-            item =>
-            item !== active
-        );
+            activePhotos.filter(
+                item =>
+                    item !== active
+            );
+
+
+        /*
+           If removing this image somehow
+           leaves the screen empty,
+           immediately create another one.
+        */
+
+        if (
+            activePhotos.length === 0
+        ) {
+
+            spawnPhoto();
+
+        }
+
 
     }, lifetime);
 
@@ -908,117 +977,116 @@ async function spawnPhoto(
 
 
 /* =========================================================
-   INITIAL SCREEN
+   INITIAL COMPOSITION
 ========================================================= */
 
-async function fillInitialScreen() {
-
-    const r =
-    Math.random();
-
+async function createInitialComposition() {
 
     /*
-       1 LARGE PHOTO: 62%
+       60% = one large image
 
-       2 PHOTOS: 35%
+       37% = two images
 
-       3 PHOTOS: 3%
+       3% = three images
     */
 
-    let target;
+    const r =
+        Math.random();
 
 
-    if (r < 0.62) {
+    let number;
 
-        target = 1;
+
+    if (r < 0.60) {
+
+        number = 1;
 
     }
 
     else if (r < 0.97) {
 
-        target = 2;
+        number = 2;
 
     }
 
     else {
 
-        target = 3;
+        number = 3;
 
     }
 
+
+    /*
+       Spawn sequentially so that the
+       second image knows where the first
+       image is.
+    */
 
     for (
         let i = 0;
-        i < target;
+        i < number;
         i++
     ) {
 
-        await spawnPhoto(
-            i === 2
-        );
+        await spawnPhoto();
 
     }
 
 
-    previousBatchSize =
-    target;
+    /*
+       Absolute safety:
+
+       NEVER leave a blank page.
+    */
+
+    if (
+        activePhotos.length === 0
+    ) {
+
+        await spawnPhoto();
+
+    }
 
 }
 
 
 /* =========================================================
-   DETERMINE NEXT EVENT
+   EVENT LOGIC
 ========================================================= */
 
-function determineBatchSize() {
+async function runEvent() {
+
+    if (loading) {
+
+        return;
+
+    }
+
+
+    loading = true;
+
 
     const count =
-    activePhotos.length;
+        activePhotos.length;
 
 
     /*
-       EMPTY SCREEN
+       =====================================
+       NO PHOTOS
+       =====================================
 
-       Strongly favour one large photo.
+       Impossible state.
+
+       Immediately refill.
     */
 
     if (count === 0) {
 
-        const r =
-        Math.random();
+        await spawnPhoto();
 
+        loading = false;
 
-        /*
-           Rare 3-photo event.
-        */
-
-        if (
-            r < TRIPLE_CHANCE
-        ) {
-
-            return 3;
-
-        }
-
-
-        /*
-           Two photos.
-        */
-
-        if (
-            r < 0.40
-        ) {
-
-            return 2;
-
-        }
-
-
-        /*
-           One large photo.
-        */
-
-        return 1;
+        return;
 
     }
 
@@ -1031,74 +1099,49 @@ function determineBatchSize() {
 
     if (count === 1) {
 
-        let doubleChance =
-        DOUBLE_CHANCE;
-
-
-        /*
-           Avoid endlessly generating
-           the same two-photo rhythm.
-        */
-
-        if (
-            previousBatchSize === 2
-        ) {
-
-            doubleChance *= 0.35;
-
-        }
-
-
-        if (
-            previousBatchSize === 3
-        ) {
-
-            doubleChance *= 0.20;
-
-        }
-
-
         const r =
-        Math.random();
+            Math.random();
 
 
         /*
-           Very rare event that attempts
-           to bring two more photos.
+           45% chance of adding
+           a second photo.
+
+           This is the important change
+           from the previous version.
         */
 
-        if (
-            r < TRIPLE_CHANCE
-        ) {
+        if (r < 0.45) {
 
-            return 2;
+            await spawnPhoto();
 
         }
 
 
         /*
-           Normal second photo.
+           3% chance of attempting
+           to create TWO additional
+           photos at once.
+
+           This produces the rare
+           three-photo composition.
         */
 
-        if (
-            r <
-            TRIPLE_CHANCE +
-            doubleChance
-        ) {
+        else if (r < 0.48) {
 
-            return 1;
+            await spawnPhoto();
+
+            await spawnPhoto();
 
         }
 
 
         /*
-           Otherwise wait.
+           Otherwise nothing happens.
 
-           This lets the large image
-           remain contemplative.
+           The existing image gets
+           breathing room.
         */
-
-        return 0;
 
     }
 
@@ -1109,23 +1152,27 @@ function determineBatchSize() {
        =====================================
     */
 
-    if (count === 2) {
+    else if (count === 2) {
+
+        const r =
+            Math.random();
+
 
         /*
-           Usually don't immediately add
-           a third photo.
+           18% chance to create a third.
         */
 
-        if (
-            Math.random() < 0.30
-        ) {
+        if (r < 0.18) {
 
-            return 1;
+            await spawnPhoto();
 
         }
 
 
-        return 0;
+        /*
+           Otherwise simply let the
+           composition exist.
+        */
 
     }
 
@@ -1136,67 +1183,16 @@ function determineBatchSize() {
        =====================================
     */
 
-    return 0;
+    else {
 
-}
+        /*
+           Do absolutely nothing.
 
-
-/* =========================================================
-   RUN EVENT
-========================================================= */
-
-async function runEvent() {
-
-    if (loading) {
-        return;
-    }
-
-
-    loading = true;
-
-
-    let amount =
-    determineBatchSize();
-
-
-    amount =
-    Math.min(
-        amount,
-        MAX_PHOTOS -
-        activePhotos.length
-    );
-
-
-    /*
-       Create simultaneous photos
-       independently.
-    */
-
-    const tasks = [];
-
-
-    for (
-        let i = 0;
-        i < amount;
-        i++
-    ) {
-
-        const isThird =
-        activePhotos.length + i >= 2;
-
-
-        tasks.push(
-            spawnPhoto(isThird)
-        );
+           One of the existing photos will
+           eventually disappear naturally.
+        */
 
     }
-
-
-    await Promise.all(tasks);
-
-
-    previousBatchSize =
-    amount;
 
 
     loading = false;
@@ -1208,39 +1204,28 @@ async function runEvent() {
    SCHEDULER
 ========================================================= */
 
-function scheduleNextEvent() {
-
-    const mobile =
-    window.innerWidth < 600;
-
+function scheduleEvent() {
 
     const delay =
-    mobile
-
-    ? random(
-        MOBILE_MIN_DELAY,
-        MOBILE_MAX_DELAY
-    )
-
-    : random(
-        DESKTOP_MIN_DELAY,
-        DESKTOP_MAX_DELAY
-    );
+        random(
+            MIN_EVENT_DELAY,
+            MAX_EVENT_DELAY
+        );
 
 
     setTimeout(async () => {
 
 
         /*
-           If somehow completely empty,
-           immediately rebuild.
+           Never allow a completely
+           empty page.
         */
 
         if (
             activePhotos.length === 0
         ) {
 
-            await fillInitialScreen();
+            await spawnPhoto();
 
         }
 
@@ -1251,7 +1236,7 @@ function scheduleNextEvent() {
         }
 
 
-        scheduleNextEvent();
+        scheduleEvent();
 
 
     }, delay);
@@ -1264,9 +1249,9 @@ function scheduleNextEvent() {
 ========================================================= */
 
 const fullscreenButton =
-document.getElementById(
-    "fullscreen"
-);
+    document.getElementById(
+        "fullscreen"
+    );
 
 
 fullscreenButton.addEventListener(
@@ -1280,7 +1265,7 @@ fullscreenButton.addEventListener(
             ) {
 
                 await document.documentElement
-                .requestFullscreen();
+                    .requestFullscreen();
 
             }
 
@@ -1314,4 +1299,5 @@ loadPhotos();
 </script>
 
 </body>
+
 </html>
