@@ -166,7 +166,7 @@
       if (!response.ok) throw new Error('Réponse GitHub : ' + response.status);
       const files = await response.json();
       if (!Array.isArray(files)) throw new Error('Dossier introuvable');
-      catalog = files.filter(f => f.type === 'file' && imagePattern.test(f.name)).map(f => ({url: `./${FOLDER}/${encodeURIComponent(f.name)}`}));
+      catalog = files.filter(f => f.type === 'file' && imagePattern.test(f.name)).map(f => ({url: `/${FOLDER}/${encodeURIComponent(f.name)}`}));
       if (!catalog.length) throw new Error('Aucune image dans le dossier');
       replenish();
       await next();
