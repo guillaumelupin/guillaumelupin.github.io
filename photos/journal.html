@@ -1,1678 +1,186 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport"
-      content="width=device-width,
-               initial-scale=1.0,
-               maximum-scale=1.0,
-               user-scalable=no">
-
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Journal</title>
 <style>
-html, body {
-    margin: 0;
-    padding: 0;
-    width: 100%;
-    height: 100%;
-    overflow: hidden;
-    background: #ffffff;
-    touch-action: none;
-}
-
-#journal {
-    position: fixed;
-    inset: 0;
-    width: 100vw;
-    height: 100vh;
-    overflow: hidden;
-}
-
-.photo {
-    position: absolute;
-    display: block;
-    object-fit: contain;
-    user-select: none;
-    -webkit-user-drag: none;
-    pointer-events: none;
-    transform-origin: center center;
-}
-
-/* =========================
-   FULLSCREEN
-========================= */
-
-#fullscreen {
-    position: fixed;
-    top: 12px;
-    right: 12px;
-    width: 28px;
-    height: 28px;
-    padding: 0;
-    border: 0;
-    background: transparent;
-    opacity: 0.06;
-    z-index: 9999;
-    cursor: pointer;
-}
-
-#fullscreen:hover {
-    opacity: 0.20;
-}
-
-#fullscreen svg {
-    width: 18px;
-    height: 18px;
-}
-
-:fullscreen #fullscreen {
-    opacity: 0;
-}
+  * { box-sizing: border-box; }
+  html, body { margin: 0; width: 100%; height: 100%; background: #fff; overflow: hidden; }
+  body { font-family: Arial, sans-serif; }
+  #journal { position: fixed; inset: 0; display: flex; justify-content: center; align-items: center; padding: 4vmin; cursor: pointer; touch-action: manipulation; }
+  .composition { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; gap: 3vmin; }
+  .composition.double.mobile { flex-direction: column; }
+  .composition.double.desktop { flex-direction: row; }
+  .slot { min-width: 0; min-height: 0; display: flex; align-items: center; justify-content: center; flex: 1; width: 100%; height: 100%; }
+  .composition.double.mobile .slot { height: 50%; }
+  .composition.double.desktop .slot { width: 50%; }
+  .slot img { display: block; max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain; user-select: none; -webkit-user-drag: none; pointer-events: none; }
+  #status { position: fixed; left: 12px; bottom: 12px; font-size: 12px; color: #888; pointer-events: none; }
 </style>
 </head>
-
 <body>
-
-<div id="journal"></div>
-
-<button id="fullscreen">
-    <svg viewBox="0 0 24 24"
-         fill="none"
-         stroke="currentColor"
-         stroke-width="1.5">
-        <path d="M4 9V4h5"/>
-        <path d="M20 9V4h-5"/>
-        <path d="M4 15v5h5"/>
-        <path d="M20 15v5h-5"/>
-    </svg>
-</button>
-
+<main id="journal" role="button" tabindex="0" aria-label="Afficher la photographie suivante"></main>
+<div id="status" aria-live="polite"></div>
 <script>
-
-/* =========================================================
-   GITHUB
-========================================================= */
-
-const API =
-    "https://api.github.com/repos/" +
-    "guillaumelupin/" +
-    "guillaumelupin.github.io/" +
-    "contents/photos/journal?ref=main";
-
-
-/* =========================================================
-   GENERAL
-========================================================= */
-
-const MAX_PHOTOS = 3;
-
-/*
-    Le programme réfléchit toutes les 4 à 7 secondes.
-    Ce n'est PAS obligatoire qu'une photo apparaisse
-    à chaque réflexion.
-*/
-
-const MIN_ROLL = 4000;
-const MAX_ROLL = 7000;
-
-const GENERATE_CHANCE = 0.90;
-
-
-/* =========================================================
-   COMPOSITION
-========================================================= */
-
-/*
-    Lorsqu'il y a UNE photo :
-
-    30 % → tentative d'ajouter une deuxième
-    70 % → rien / possibilité de renouveler plus tard
-*/
-
-const ONE_TO_TWO_CHANCE = 0.30;
-
-
-/*
-    Lorsqu'il y a DEUX photos :
-
-    10 % → tentative d'ajouter une troisième
-*/
-
-const TWO_TO_THREE_CHANCE = 0.10;
-
-
-/* =========================================================
-   OVERLAP
-========================================================= */
-
-/*
-    Le chevauchement reste volontairement rare.
-
-    Deuxième photo :
-    ~4 % de chances de chevauchement.
-
-    Troisième photo :
-    ~15 % de chances.
-
-    Il existe aussi un événement extrêmement rare
-    qui peut forcer un petit chevauchement.
-*/
-
-const SECOND_OVERLAP_CHANCE = 0.04;
-const THIRD_OVERLAP_CHANCE = 0.15;
-
-const RARE_OVERLAP_CHANCE = 0.01;
-
-
-/*
-    Même lorsqu'un chevauchement est autorisé,
-    il reste limité.
-*/
-
-const MAX_NORMAL_OVERLAP = 0.05;
-const MAX_THIRD_OVERLAP = 0.10;
-
-
-/* =========================================================
-   LIFETIME
-========================================================= */
-
-/*
-    Durée normale :
-    moyenne autour de 6–8 secondes.
-*/
-
-const NORMAL_MIN = 5500;
-const NORMAL_MAX = 10500;
-
-
-/*
-    Petite possibilité d'une photo très courte.
-*/
-
-const SHORT_CHANCE = 0.07;
-
-const SHORT_MIN = 3500;
-const SHORT_MAX = 5500;
-
-
-/*
-    Rare photo longue.
-*/
-
-const LONG_CHANCE = 0.04;
-
-const LONG_MIN = 10500;
-const LONG_MAX = 15000;
-
-
-/*
-    Très rare "shiny".
-
-    Environ 1 % :
-    15–20 secondes.
-*/
-
-const VERY_LONG_CHANCE = 0.01;
-
-const VERY_LONG_MIN = 15000;
-const VERY_LONG_MAX = 20000;
-
-
-/* =========================================================
-   PHOTO MEMORY
-========================================================= */
-
-const viewCount = new Map();
-
-let recent = [];
-
-let displayedSinceCheck = 0;
-
-const MIN_FORCED_CHECK = 35;
-const MAX_FORCED_CHECK = 45;
-
-let nextForcedCheck = 0;
-
-
-/* =========================================================
-   VARIABLES
-========================================================= */
-
-let photos = [];
-let active = [];
-
-
-/* =========================================================
-   RANDOM
-========================================================= */
-
-function random(min, max) {
-    return Math.random() * (max - min) + min;
-}
-
-function randomInt(min, max) {
-    return Math.floor(
-        Math.random() * (max - min + 1)
-    ) + min;
-}
-
-
-/* =========================================================
-   IMAGE LOADING
-========================================================= */
-
-function loadImage(src) {
-
-    return new Promise(resolve => {
-
-        const image = new Image();
-
-        image.onload = () => {
-            resolve(image);
-        };
-
-        image.onerror = () => {
-
-            /*
-                IMPORTANT :
-                la photo reste dans le catalogue.
-                Elle pourra être réessayée.
-            */
-
-            resolve(null);
-        };
-
-        image.src = src;
+(() => {
+  'use strict';
+  // Ce dossier doit être à la racine du dépôt public GitHub Pages.
+  const OWNER = 'guillaumelupin';
+  const REPO = 'guillaumelupin.github.io';
+  const BRANCH = 'main';
+  const FOLDER = 'image';
+  const INTERVAL = 10000;
+  const MOBILE_MAX = 700;
+  const journal = document.getElementById('journal');
+  const status = document.getElementById('status');
+  const imagePattern = /\.(jpe?g|png|webp|gif|avif)$/i;
+  let catalog = [];
+  let remaining = [];
+  let lastShown = new Set();
+  let timer = null;
+  let generation = 0;
+  let busy = false;
+  const dimensions = new Map();
+
+  function shuffle(items) {
+    const result = [...items];
+    for (let i = result.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [result[i], result[j]] = [result[j], result[i]];
+    }
+    return result;
+  }
+  function replenish() {
+    remaining = shuffle(catalog);
+    // Évite de recommencer un cycle avec la dernière image montrée, si possible.
+    if (remaining.length > 1 && lastShown.has(remaining[remaining.length - 1].url)) {
+      const candidate = remaining.findIndex(item => !lastShown.has(item.url));
+      if (candidate !== -1) [remaining[candidate], remaining[remaining.length - 1]] = [remaining[remaining.length - 1], remaining[candidate]];
+    }
+  }
+  function take(exclude = new Set(), orientation = null) {
+    if (!remaining.length) replenish();
+    let index = -1;
+    for (let i = remaining.length - 1; i >= 0; i--) {
+      const item = remaining[i];
+      if (exclude.has(item.url)) continue;
+      if (orientation && dimensions.get(item.url)?.orientation !== orientation) continue;
+      index = i; break;
+    }
+    if (index < 0) return null;
+    return remaining.splice(index, 1)[0];
+  }
+  function preload(url) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = () => reject(new Error('Image inaccessible : ' + url));
+      img.src = url;
     });
-}
-
-
-/* =========================================================
-   LOAD PHOTOS FROM GITHUB
-========================================================= */
-
-async function loadPhotos() {
-
+  }
+  async function inspect(item) {
+    if (dimensions.has(item.url)) return dimensions.get(item.url);
+    const img = await preload(item.url);
+    const info = { orientation: img.naturalHeight > img.naturalWidth ? 'vertical' : 'horizontal' };
+    dimensions.set(item.url, info);
+    return info;
+  }
+  function isMobile() { return window.innerWidth <= MOBILE_MAX; }
+  function doubleChance(orientation) {
+    if (isMobile()) return orientation === 'horizontal' ? 0.25 : 0;
+    return orientation === 'vertical' ? 0.20 : 0.15;
+  }
+  function singleScale() {
+    const r = Math.random();
+    if (r < 0.01) return 0.10 + Math.random() * 0.035; // miniature 1 %
+    if (r < 0.06) return 0.28 + Math.random() * 0.15;  // petite 5 %
+    if (r < 0.25) return 0.58 + Math.random() * 0.16;  // moyenne 19 %
+    return 0.88 + Math.random() * 0.12;                // grande 75 %
+  }
+  function build(items, scale) {
+    const double = items.length === 2;
+    const composition = document.createElement('div');
+    composition.className = `composition ${double ? 'double' : 'single'} ${isMobile() ? 'mobile' : 'desktop'}`;
+    for (const item of items) {
+      const slot = document.createElement('div');
+      slot.className = 'slot';
+      const img = document.createElement('img');
+      img.src = item.url;
+      img.alt = '';
+      img.draggable = false;
+      // Même facteur de taille pour les deux photos ; proportions préservées.
+      img.style.maxWidth = `${scale * 100}%`;
+      img.style.maxHeight = `${scale * 100}%`;
+      slot.appendChild(img);
+      composition.appendChild(slot);
+    }
+    return composition;
+  }
+  async function next() {
+    if (busy || !catalog.length) return;
+    busy = true;
+    clearTimeout(timer);
+    const token = ++generation;
+    const rejected = new Set();
     try {
-
-        const response = await fetch(API);
-
-        if (!response.ok) {
-            throw new Error("GitHub API error");
+      let first = null, orientation = null;
+      for (let attempt = 0; attempt < catalog.length; attempt++) {
+        const candidate = take(new Set([...lastShown, ...rejected])) || take(rejected);
+        if (!candidate) break;
+        try { const info = await inspect(candidate); first = candidate; orientation = info.orientation; break; }
+        catch (error) { console.warn(error); rejected.add(candidate.url); }
+      }
+      if (!first) { status.textContent = 'Impossible de charger les photographies.'; return; }
+      const selected = [first];
+      if (Math.random() < doubleChance(orientation)) {
+        // On examine les orientations inconnues sans consommer l'ordre aléatoire.
+        const candidates = shuffle(remaining.filter(x => x.url !== first.url && !lastShown.has(x.url)));
+        for (const candidate of candidates) {
+          try {
+            const info = await inspect(candidate);
+            if (info.orientation === orientation) {
+              const i = remaining.findIndex(x => x.url === candidate.url);
+              if (i >= 0) remaining.splice(i, 1);
+              selected.push(candidate);
+              break;
+            }
+          } catch (error) { console.warn(error); }
         }
-
-        const files = await response.json();
-
-        photos = files
-            .filter(file =>
-                file.type === "file" &&
-                /\.(jpg|jpeg|png|webp|gif)$/i.test(file.name)
-            )
-            .map(file =>
-                "https://raw.githubusercontent.com/" +
-                "guillaumelupin/" +
-                "guillaumelupin.github.io/" +
-                "main/photos/journal/" +
-                encodeURIComponent(file.name)
-            );
-
-        for (const src of photos) {
-            viewCount.set(src, 0);
-        }
-
-        nextForcedCheck = randomInt(
-            MIN_FORCED_CHECK,
-            MAX_FORCED_CHECK
-        );
-
-        console.log(
-            "Journal:",
-            photos.length,
-            "photos found."
-        );
-
-        await createInitialComposition();
-
-        roll();
-
+      }
+      if (token !== generation) return;
+      const scale = selected.length === 2 ? 0.92 + Math.random() * 0.08 : singleScale();
+      journal.replaceChildren(build(selected, scale));
+      lastShown = new Set(selected.map(x => x.url));
+      status.textContent = '';
+    } finally {
+      busy = false;
+      timer = setTimeout(next, INTERVAL);
+    }
+  }
+  async function start() {
+    status.textContent = 'Chargement…';
+    try {
+      const url = `https://api.github.com/repos/${OWNER}/${REPO}/contents/${FOLDER}?ref=${BRANCH}`;
+      const response = await fetch(url);
+      if (!response.ok) throw new Error('Réponse GitHub : ' + response.status);
+      const files = await response.json();
+      if (!Array.isArray(files)) throw new Error('Dossier introuvable');
+      catalog = files.filter(f => f.type === 'file' && imagePattern.test(f.name)).map(f => ({url: `./${FOLDER}/${encodeURIComponent(f.name)}`}));
+      if (!catalog.length) throw new Error('Aucune image dans le dossier');
+      replenish();
+      await next();
     } catch (error) {
-
-        console.error(
-            "Journal error:",
-            error
-        );
+      console.error(error);
+      status.textContent = 'Impossible de lire le dossier image/ sur GitHub.';
     }
-}
-
-
-/* =========================================================
-   CHOOSE PHOTO
-========================================================= */
-
-function choosePhoto() {
-
-    if (photos.length === 0) {
-        return null;
-    }
-
-
-    /* -----------------------------------------------------
-       FORCE UNDER-SEEN PHOTOS
-    ----------------------------------------------------- */
-
-    if (
-        displayedSinceCheck >=
-        nextForcedCheck
-    ) {
-
-        const unseen = photos.filter(
-            src =>
-                (viewCount.get(src) || 0) === 0
-        );
-
-        if (unseen.length > 0) {
-
-            return unseen[
-                randomInt(
-                    0,
-                    unseen.length - 1
-                )
-            ];
-        }
-
-
-        let minimum = Infinity;
-
-        for (const src of photos) {
-
-            const count =
-                viewCount.get(src) || 0;
-
-            if (count < minimum) {
-                minimum = count;
-            }
-        }
-
-        const leastSeen = photos.filter(
-            src =>
-                (viewCount.get(src) || 0) === minimum
-        );
-
-        if (leastSeen.length > 0) {
-
-            return leastSeen[
-                randomInt(
-                    0,
-                    leastSeen.length - 1
-                )
-            ];
-        }
-    }
-
-
-    /* -----------------------------------------------------
-       WEIGHTED RANDOM
-    ----------------------------------------------------- */
-
-    const pool = [];
-
-    for (const src of photos) {
-
-        let weight = 100;
-
-        const count =
-            viewCount.get(src) || 0;
-
-
-        /*
-            Photos jamais montrées :
-            avantage.
-        */
-
-        if (count === 0) {
-            weight = 220;
-        }
-
-
-        /*
-            Même photo trois fois de suite :
-            interdit.
-        */
-
-        if (
-            recent.length >= 2 &&
-            recent[recent.length - 1] === src &&
-            recent[recent.length - 2] === src
-        ) {
-
-            weight = 0;
-        }
-
-
-        /*
-            Deux fois de suite :
-            possible mais très rare.
-        */
-
-        else if (
-            recent.length >= 1 &&
-            recent[recent.length - 1] === src
-        ) {
-
-            weight *= 0.10;
-        }
-
-
-        /*
-            Photo récemment vue :
-            légèrement découragée.
-        */
-
-        else if (
-            recent.length >= 2 &&
-            recent[recent.length - 2] === src
-        ) {
-
-            weight *= 0.35;
-        }
-
-
-        /*
-            Les photos beaucoup vues
-            deviennent progressivement moins probables.
-        */
-
-        if (count > 0) {
-
-            weight *=
-                1 / Math.sqrt(count);
-        }
-
-
-        for (
-            let i = 0;
-            i < Math.max(
-                0,
-                Math.round(weight)
-            );
-            i++
-        ) {
-
-            pool.push(src);
-        }
-    }
-
-
-    if (pool.length === 0) {
-
-        return photos[
-            randomInt(
-                0,
-                photos.length - 1
-            )
-        ];
-    }
-
-
-    return pool[
-        randomInt(
-            0,
-            pool.length - 1
-        )
-    ];
-}
-
-
-/* =========================================================
-   SIZE
-========================================================= */
-
-function getSize(numberOfPhotos) {
-
-    const mobile =
-        window.innerWidth < 600;
-
-
-    /*
-        TROIS PHOTOS
-
-        Elles doivent être suffisamment petites
-        pour pouvoir coexister.
-    */
-
-    if (numberOfPhotos >= 3) {
-
-        return {
-
-            w: mobile
-                ? random(25, 38)
-                : random(22, 36),
-
-            h: mobile
-                ? random(25, 40)
-                : random(22, 38)
-        };
-    }
-
-
-    /*
-        PHOTO UNIQUE
-
-        C'est ici que les grandes photos
-        deviennent plus fréquentes.
-
-        Mais on ne pousse que légèrement
-        les anciennes limites.
-    */
-
-    if (Math.random() < 0.90) {
-
-        return {
-
-            w: mobile
-                ? random(58, 88)
-                : random(48, 76),
-
-            h: mobile
-                ? random(58, 86)
-                : random(48, 78)
-        };
-    }
-
-
-    /*
-        Taille moyenne occasionnelle.
-    */
-
-    return {
-
-        w: mobile
-            ? random(45, 63)
-            : random(38, 55),
-
-        h: mobile
-            ? random(45, 63)
-            : random(38, 56)
-    };
-}
-
-
-/* =========================================================
-   RECTANGLE INTERSECTION
-========================================================= */
-
-function intersection(a, b) {
-
-    const x =
-        Math.max(
-            0,
-            Math.min(
-                a.x + a.w,
-                b.x + b.w
-            ) -
-            Math.max(
-                a.x,
-                b.x
-            )
-        );
-
-    const y =
-        Math.max(
-            0,
-            Math.min(
-                a.y + a.h,
-                b.y + b.h
-            ) -
-            Math.max(
-                a.y,
-                b.y
-            )
-        );
-
-    return x * y;
-}
-
-
-/* =========================================================
-   FIND POSITION
-========================================================= */
-
-function findPosition(
-    w,
-    h,
-    overlapChance,
-    isThirdPhoto
-) {
-
-    /*
-        1 % de chance :
-        le système accepte exceptionnellement
-        un peu plus de liberté.
-    */
-
-    if (
-        Math.random() <
-        RARE_OVERLAP_CHANCE
-    ) {
-
-        overlapChance = 1;
-    }
-
-
-    const wantsOverlap =
-        Math.random() <
-        overlapChance;
-
-
-    let best = null;
-    let bestOverlap = Infinity;
-
-
-    /*
-        Recherche intensive de positions.
-    */
-
-    for (
-        let i = 0;
-        i < 3000;
-        i++
-    ) {
-
-        const candidate = {
-
-            x: random(
-                2,
-                98 - w
-            ),
-
-            y: random(
-                2,
-                98 - h
-            ),
-
-            w: w,
-            h: h
-        };
-
-
-        let totalOverlap = 0;
-
-
-        for (const item of active) {
-
-            totalOverlap +=
-                intersection(
-                    candidate,
-                    item.position
-                );
-        }
-
-
-        const area =
-            w * h;
-
-        const ratio =
-            totalOverlap / area;
-
-
-        /* -------------------------------------------------
-           NO OVERLAP
-        ------------------------------------------------- */
-
-        if (!wantsOverlap) {
-
-            if (
-                totalOverlap === 0
-            ) {
-
-                return candidate;
-            }
-
-
-            if (
-                ratio <
-                bestOverlap
-            ) {
-
-                bestOverlap = ratio;
-                best = candidate;
-            }
-        }
-
-
-        /* -------------------------------------------------
-           RARE OVERLAP
-        ------------------------------------------------- */
-
-        else {
-
-            const maximum =
-                isThirdPhoto
-                    ? MAX_THIRD_OVERLAP
-                    : MAX_NORMAL_OVERLAP;
-
-
-            if (
-                ratio > 0 &&
-                ratio <= maximum
-            ) {
-
-                return candidate;
-            }
-        }
-    }
-
-
-    /*
-        Si aucune position parfaite n'a été trouvée,
-        on prend la meilleure position trouvée.
-    */
-
-    if (
-        best &&
-        bestOverlap < 0.03
-    ) {
-
-        return best;
-    }
-
-
-    /*
-        Dernier filet de sécurité.
-        Recherche de l'endroit le moins occupé.
-    */
-
-    let safest = null;
-    let safestOverlap = Infinity;
-
-
-    for (
-        let i = 0;
-        i < 1500;
-        i++
-    ) {
-
-        const candidate = {
-
-            x: random(
-                2,
-                98 - w
-            ),
-
-            y: random(
-                2,
-                98 - h
-            ),
-
-            w: w,
-            h: h
-        };
-
-
-        let totalOverlap = 0;
-
-
-        for (const item of active) {
-
-            totalOverlap +=
-                intersection(
-                    candidate,
-                    item.position
-                );
-        }
-
-
-        const ratio =
-            totalOverlap /
-            (w * h);
-
-
-        if (
-            ratio <
-            safestOverlap
-        ) {
-
-            safestOverlap = ratio;
-            safest = candidate;
-        }
-    }
-
-
-    return safest;
-}
-
-
-/* =========================================================
-   ROTATION
-========================================================= */
-
-function shouldRotateSinglePhoto() {
-
-    /*
-        Rotation uniquement :
-
-        - une seule photo
-        - grande photo
-        - événement assez rare
-    */
-
-    if (active.length !== 0) {
-        return false;
-    }
-
-    return Math.random() < 0.10;
-}
-
-
-/* =========================================================
-   LIFETIME
-========================================================= */
-
-function getLifetime() {
-
-    /*
-        Shiny :
-        1 % → 15–20 secondes.
-    */
-
-    if (
-        Math.random() <
-        VERY_LONG_CHANCE
-    ) {
-
-        return random(
-            VERY_LONG_MIN,
-            VERY_LONG_MAX
-        );
-    }
-
-
-    /*
-        Rare :
-        10–15 secondes.
-    */
-
-    if (
-        Math.random() <
-        LONG_CHANCE
-    ) {
-
-        return random(
-            LONG_MIN,
-            LONG_MAX
-        );
-    }
-
-
-    /*
-        Petite durée :
-        7 % → 3.5–5.5 secondes.
-    */
-
-    if (
-        Math.random() <
-        SHORT_CHANCE
-    ) {
-
-        return random(
-            SHORT_MIN,
-            SHORT_MAX
-        );
-    }
-
-
-    /*
-        Durée normale :
-        5.5–10.5 secondes.
-    */
-
-    return random(
-        NORMAL_MIN,
-        NORMAL_MAX
-    );
-}
-
-
-/* =========================================================
-   ADD PHOTO
-========================================================= */
-
-async function addPhoto(
-    overlapChance = 0,
-    isThirdPhoto = false
-) {
-
-    if (
-        active.length >=
-        MAX_PHOTOS
-    ) {
-
-        return false;
-    }
-
-
-    const src =
-        choosePhoto();
-
-
-    if (!src) {
-        return false;
-    }
-
-
-    /*
-        L'image doit être complètement chargée
-        avant d'être ajoutée au DOM.
-    */
-
-    const loaded =
-        await loadImage(src);
-
-
-    if (!loaded) {
-
-        /*
-            Elle reste dans le catalogue.
-        */
-
-        return false;
-    }
-
-
-    const numberOfPhotos =
-        active.length + 1;
-
-
-    const size =
-        getSize(
-            numberOfPhotos
-        );
-
-
-    const position =
-        findPosition(
-            size.w,
-            size.h,
-            overlapChance,
-            isThirdPhoto
-        );
-
-
-    const img =
-        document.createElement("img");
-
-
-    img.className =
-        "photo";
-
-    img.src =
-        loaded.src;
-
-    img.draggable =
-        false;
-
-
-    img.style.left =
-        position.x + "%";
-
-    img.style.top =
-        position.y + "%";
-
-    img.style.width =
-        position.w + "%";
-
-    img.style.height =
-        position.h + "%";
-
-
-    /*
-        Rotation :
-
-        seulement si cette photo est seule
-        et suffisamment grande.
-
-        On vérifie aussi que l'image est
-        réellement en paysage.
-    */
-
-    const isLandscape =
-        loaded.naturalWidth >
-        loaded.naturalHeight;
-
-
-    let rotation = 0;
-
-
-    if (
-        numberOfPhotos === 1 &&
-        position.w >= 58 &&
-        isLandscape &&
-        shouldRotateSinglePhoto()
-    ) {
-
-        rotation =
-            Math.random() < 0.5
-                ? 90
-                : -90;
-
-
-        /*
-            Après rotation, on réduit légèrement
-            l'image pour être certain qu'elle
-            reste entièrement visible.
-        */
-
-        const rotatedWidth =
-            position.h;
-
-        const rotatedHeight =
-            position.w;
-
-
-        if (
-            rotatedWidth <= 94 &&
-            rotatedHeight <= 94
-        ) {
-
-            img.style.width =
-                rotatedWidth + "%";
-
-            img.style.height =
-                rotatedHeight + "%";
-        }
-        else {
-
-            rotation = 0;
-        }
-    }
-
-
-    img.style.transform =
-        `rotate(${rotation}deg)`;
-
-
-    journal.appendChild(img);
-
-
-    const item = {
-
-        element: img,
-
-        src: src,
-
-        position: {
-
-            x: parseFloat(
-                img.style.left
-            ),
-
-            y: parseFloat(
-                img.style.top
-            ),
-
-            w: parseFloat(
-                img.style.width
-            ),
-
-            h: parseFloat(
-                img.style.height
-            )
-        }
-    };
-
-
-    active.push(item);
-
-
-    /* =====================================================
-       MEMORY
-    ===================================================== */
-
-    const count =
-        viewCount.get(src) || 0;
-
-
-    viewCount.set(
-        src,
-        count + 1
-    );
-
-
-    displayedSinceCheck++;
-
-
-    recent.push(src);
-
-
-    if (
-        recent.length > 3
-    ) {
-
-        recent.shift();
-    }
-
-
-    if (
-        displayedSinceCheck >=
-        nextForcedCheck
-    ) {
-
-        displayedSinceCheck = 0;
-
-        nextForcedCheck =
-            randomInt(
-                MIN_FORCED_CHECK,
-                MAX_FORCED_CHECK
-            );
-    }
-
-
-    /* =====================================================
-       LIFETIME
-    ===================================================== */
-
-    const lifetime =
-        getLifetime();
-
-
-    setTimeout(() => {
-
-        img.remove();
-
-
-        active =
-            active.filter(
-                x => x !== item
-            );
-
-
-        /*
-            PAGE BLANCHE INTERDITE.
-
-            Si la dernière photo disparaît,
-            on lance immédiatement une nouvelle
-            génération de secours.
-        */
-
-        if (
-            active.length === 0
-        ) {
-
-            emergencyPhoto();
-
-        }
-
-    }, lifetime);
-
-
-    return true;
-}
-
-
-/* =========================================================
-   EMERGENCY PHOTO
-========================================================= */
-
-async function emergencyPhoto() {
-
-    /*
-        On essaie immédiatement.
-    */
-
-    const success =
-        await addPhoto(0);
-
-
-    /*
-        Si l'image choisie ne se charge pas,
-        on réessaie avec une autre après un très
-        court délai.
-    */
-
-    if (!success) {
-
-        setTimeout(
-            emergencyPhoto,
-            300
-        );
-    }
-}
-
-
-/* =========================================================
-   INITIAL COMPOSITION
-========================================================= */
-
-async function createInitialComposition() {
-
-    /*
-        Composition initiale :
-
-        50 % → une grande photo
-        45 % → deux photos
-        5 %  → trois photos
-    */
-
-    const r =
-        Math.random();
-
-
-    let amount;
-
-
-    if (r < 0.50) {
-
-        amount = 1;
-
-    }
-    else if (r < 0.95) {
-
-        amount = 2;
-
-    }
-    else {
-
-        amount = 3;
-    }
-
-
-    /*
-        On charge les photos l'une après l'autre
-        pour que le positionnement tienne compte
-        des photos déjà présentes.
-    */
-
-    for (
-        let i = 0;
-        i < amount;
-        i++
-    ) {
-
-        if (active.length >= 3) {
-            break;
-        }
-
-
-        if (i === 0) {
-
-            await addPhoto(
-                0,
-                false
-            );
-
-        }
-        else if (i === 1) {
-
-            await addPhoto(
-                SECOND_OVERLAP_CHANCE,
-                false
-            );
-
-        }
-        else {
-
-            await addPhoto(
-                THIRD_OVERLAP_CHANCE,
-                true
-            );
-        }
-    }
-
-
-    /*
-        Sécurité absolue.
-    */
-
-    if (
-        active.length === 0
-    ) {
-
-        await emergencyPhoto();
-    }
-}
-
-
-/* =========================================================
-   GENERATION DECISION
-========================================================= */
-
-function decideGeneration() {
-
-    /*
-        ZERO PHOTO
-
-        Toujours une photo.
-    */
-
-    if (
-        active.length === 0
-    ) {
-
-        return {
-
-            amount: 1,
-
-            overlap: 0
-        };
-    }
-
-
-    /*
-        UNE PHOTO
-
-        30 % → deuxième photo.
-
-        Sinon :
-        petite possibilité de remplacement
-        ou rien.
-    */
-
-    if (
-        active.length === 1
-    ) {
-
-        const r =
-            Math.random();
-
-
-        if (
-            r < ONE_TO_TWO_CHANCE
-        ) {
-
-            return {
-
-                amount: 1,
-
-                overlap:
-                    SECOND_OVERLAP_CHANCE
-            };
-        }
-
-
-        /*
-            Petite chance supplémentaire
-            de faire apparaître une nouvelle
-            photo même lorsque la décision
-            normale disait non.
-        */
-
-        if (
-            Math.random() < 0.02
-        ) {
-
-            return {
-
-                amount: 1,
-
-                overlap: 0
-            };
-        }
-
-
-        return {
-
-            amount: 0,
-
-            overlap: 0
-        };
-    }
-
-
-    /*
-        DEUX PHOTOS
-
-        10 % → troisième photo.
-
-        Sinon, on laisse vivre la composition.
-    */
-
-    if (
-        active.length === 2
-    ) {
-
-        if (
-            Math.random() <
-            TWO_TO_THREE_CHANCE
-        ) {
-
-            return {
-
-                amount: 1,
-
-                overlap:
-                    THIRD_OVERLAP_CHANCE,
-
-                third: true
-            };
-        }
-
-
-        /*
-            2 % de chaos contrôlé :
-            même si la décision normale
-            disait non, on peut tenter.
-        */
-
-        if (
-            Math.random() < 0.02
-        ) {
-
-            return {
-
-                amount: 1,
-
-                overlap: 0,
-
-                third: false
-            };
-        }
-
-
-        return {
-
-            amount: 0,
-
-            overlap: 0
-        };
-    }
-
-
-    /*
-        TROIS PHOTOS
-
-        Impossible d'en ajouter une quatrième.
-    */
-
-    return {
-
-        amount: 0,
-
-        overlap: 0
-    };
-}
-
-
-/* =========================================================
-   RANDOM ROLL
-========================================================= */
-
-function roll() {
-
-    /*
-        Temps aléatoire entre deux décisions.
-    */
-
-    const delay =
-        random(
-            MIN_ROLL,
-            MAX_ROLL
-        );
-
-
-    setTimeout(
-        async () => {
-
-            /*
-                DÉ #1
-
-                Est-ce qu'on tente quelque chose ?
-            */
-
-            let generate =
-                Math.random() <
-                GENERATE_CHANCE;
-
-
-            /*
-                Très rare "brute force".
-
-                Même si le premier dé dit non,
-                1 % permet quand même de continuer.
-            */
-
-            if (
-                !generate &&
-                Math.random() < 0.01
-            ) {
-
-                generate = true;
-            }
-
-
-            if (!generate) {
-
-                roll();
-
-                return;
-            }
-
-
-            /*
-                DÉ #2
-
-                Que peut-on faire avec
-                la composition actuelle ?
-            */
-
-            const decision =
-                decideGeneration();
-
-
-            if (
-                decision.amount <= 0
-            ) {
-
-                roll();
-
-                return;
-            }
-
-
-            /*
-                On ajoute les nouvelles photos
-                séquentiellement.
-
-                Cela permet à chaque nouvelle photo
-                de tenir compte de celles qui existent
-                déjà réellement à l'écran.
-            */
-
-            for (
-                let i = 0;
-                i < decision.amount;
-                i++
-            ) {
-
-                if (
-                    active.length >=
-                    MAX_PHOTOS
-                ) {
-
-                    break;
-                }
-
-
-                await addPhoto(
-                    decision.overlap,
-                    decision.third === true
-                );
-            }
-
-
-            /*
-                Sécurité anti-page-blanche.
-            */
-
-            if (
-                active.length === 0
-            ) {
-
-                await emergencyPhoto();
-            }
-
-
-            /*
-                Le jeu continue.
-            */
-
-            roll();
-
-        },
-        delay
-    );
-}
-
-
-/* =========================================================
-   FULLSCREEN
-========================================================= */
-
-const fullscreenButton =
-    document.getElementById(
-        "fullscreen"
-    );
-
-
-fullscreenButton.addEventListener(
-    "click",
-    async () => {
-
-        try {
-
-            if (
-                !document.fullscreenElement
-            ) {
-
-                await document
-                    .documentElement
-                    .requestFullscreen();
-
-            }
-            else {
-
-                await document
-                    .exitFullscreen();
-            }
-
-        }
-        catch (error) {
-
-            console.error(
-                "Fullscreen error:",
-                error
-            );
-        }
-    }
-);
-
-
-/* =========================================================
-   START
-========================================================= */
-
-loadPhotos();
-
+  }
+  journal.addEventListener('click', next);
+  journal.addEventListener('keydown', event => {
+    if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); next(); }
+  });
+  start();
+})();
 </script>
-
 </body>
 </html>
