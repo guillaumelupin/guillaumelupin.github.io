@@ -1,32 +1,63 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Journal</title>
 <style>
-* { box-sizing: border-box; }
-html, body { width:100%; height:100%; margin:0; overflow:hidden; background:white; }
+* { box-sizing:border-box; }
+html,body { margin:0; width:100%; height:100%; overflow:hidden; background:#fff; }
 body { font-family:Arial,sans-serif; }
-#journal { position:fixed; inset:0; padding:4vmin; display:flex; align-items:center; justify-content:center; cursor:pointer; touch-action:manipulation; }
-#journal { -webkit-tap-highlight-color: transparent; }
-.composition { width:100%; height:100%; display:flex; align-items:center; justify-content:center; gap:3vmin; }
+html,body,#journal,#journal * {
+  -webkit-tap-highlight-color:transparent !important;
+  -webkit-user-select:none; user-select:none;
+  -webkit-touch-callout:none;
+}
+#journal {
+  position:fixed; inset:0; padding:4vmin; display:flex;
+  align-items:center; justify-content:center; cursor:pointer;
+  touch-action:manipulation; outline:none;
+}
+.composition {
+  display:flex; align-items:center; justify-content:center;
+  gap:3vmin; width:100%; height:100%;
+}
 .composition.double.mobile { flex-direction:column; }
 .composition.double.desktop { flex-direction:row; }
-.slot { min-width:0; min-height:0; display:flex; justify-content:center; align-items:center; flex:1; width:100%; height:100%; }
-.slot img { display:block; max-width:100%; max-height:100%; object-fit:contain; width:auto; height:auto; pointer-events:none; user-select:none; -webkit-user-drag:none; }
-#status { position:fixed; left:14px; bottom:12px; font:12px Arial,sans-serif; color:#777; pointer-events:none; }
+.slot {
+  flex:1; min-width:0; min-height:0; width:100%; height:100%;
+  display:flex; align-items:center; justify-content:center;
+}
+.slot img {
+  display:block; width:auto; height:auto; max-width:100%; max-height:100%;
+  object-fit:contain; pointer-events:none; -webkit-user-drag:none;
+}
+#fullscreen {
+  position:fixed; right:12px; bottom:12px; z-index:10;
+  width:30px; height:30px; border:0; padding:5px;
+  background:transparent; color:#c6c6c6; cursor:pointer;
+  -webkit-tap-highlight-color:transparent; touch-action:manipulation;
+}
+#fullscreen svg { width:20px; height:20px; display:block; }
+#fullscreen:focus { outline:none; }
+#fullscreen:focus-visible { outline:1px solid #aaa; }
+#status {
+  position:fixed; left:12px; bottom:12px;
+  color:#888; font-size:12px; pointer-events:none;
+}
 </style>
 </head>
 <body>
 <main id="journal" role="button" tabindex="0" aria-label="Photo suivante"></main>
+<button id="fullscreen" type="button" aria-label="Activer le plein écran" title="Plein écran">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round">
+<path d="M8 3H3v5 M16 3h5v5 M3 16v5h5 M21 16v5h-5"/>
+</svg></button>
 <div id="status" aria-live="polite"></div>
 <script>
 (() => {
 'use strict';
-// Correct GitHub folder: photos/images, beside photos/journal.html.
-// Static image list: no GitHub API request required.
-const IMAGE_BASE = '/photos/images/';
+// Photographs are listed locally: no GitHub API request.
 const IMAGE_NAMES = [
   "1000038011.jpg",
   "1000038012.jpg",
@@ -160,105 +191,133 @@ const IMAGE_NAMES = [
   "1000038012 (1).jpg",
   "1000039150 (1).jpg"
 ];
-const INTERVAL = 10000;
-const MOBILE_MAX = 700;
-const journal = document.getElementById('journal');
-const status = document.getElementById('status');
-let catalog = [], queue = [], history = [], timer = null, generation = 0;
-const dimensions = new Map();
-const random = (a,b) => a + Math.random()*(b-a);
-const mobile = () => window.innerWidth <= MOBILE_MAX;
-function shuffle(items) {
-  const a=[...items];
-  for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}
+const IMAGE_BASE='/photos/images/';
+const INTERVAL=10000;
+const MOBILE_MAX=700;
+const journal=document.getElementById('journal');
+const status=document.getElementById('status');
+const fullscreen=document.getElementById('fullscreen');
+const catalog=IMAGE_NAMES.map(name=>IMAGE_BASE+encodeURIComponent(name));
+const dimensions=new Map();
+let queue=[], timer=null, generation=0, lastShown=null;
+const rand=(a,b)=>a+Math.random()*(b-a);
+const mobile=()=>window.innerWidth<=MOBILE_MAX;
+function shuffle(a) {
+  a=[...a];
+  for(let i=a.length-1;i>0;i--) {
+    const j=Math.floor(Math.random()*(i+1));
+    [a[i],a[j]]=[a[j],a[i]];
+  }
   return a;
 }
 function nextFile() {
   if(!queue.length) {
     queue=shuffle(catalog);
-    if(history.length && queue.length>1 && queue[0]===history[history.length-1]) [queue[0],queue[1]]=[queue[1],queue[0]];
+    if(queue.length>1 && queue[0]===lastShown) [queue[0],queue[1]]=[queue[1],queue[0]];
   }
   return queue.shift();
 }
-function load(src) {
+function preload(src) {
   return new Promise((resolve,reject)=>{
-    const img = new Image();
-    img.onload = () => resolve(img);
-    img.onerror = () => reject(new Error('Image introuvable : '+src));
-    img.src = src;
+    const img=new Image();
+    img.onload=()=>resolve(img);
+    img.onerror=()=>reject(new Error('Image inaccessible : '+src));
+    img.src=src;
   });
 }
-async function dimensionsOf(src) {
+async function getDimensions(src) {
   if(dimensions.has(src)) return dimensions.get(src);
-  const img=await load(src);
-  const d={width:img.naturalWidth,height:img.naturalHeight, orientation:img.naturalWidth>=img.naturalHeight?'horizontal':'vertical'};
-  dimensions.set(src,d);
-  return d;
+  const img=await preload(src);
+  const data={orientation:img.naturalWidth>=img.naturalHeight?'horizontal':'vertical'};
+  dimensions.set(src,data);
+  return data;
 }
 function sizeFactor(double) {
-  if(double) return random(.90,.98);
+  if(double) return rand(.90,.98);
   const r=Math.random();
-  if(r<.01) return random(.065,.10); // very rare thumb-size miniature
-  if(r<.06) return random(.22,.40); // small
-  if(r<.25) return random(.57,.75); // medium
-  return random(.88,.99); // usually large
+  if(r<.01) return rand(.065,.10);
+  if(r<.06) return rand(.22,.40);
+  if(r<.25) return rand(.57,.75);
+  return rand(.88,.99);
 }
-function makeComposition(images, scale) {
+function render(sources,scale) {
   const comp=document.createElement('div');
-  const isDouble=images.length===2;
-  comp.className='composition '+(isDouble?'double ':'single ')+(mobile()?'mobile':'desktop');
-  const margin=(1-scale)*50;
+  comp.className='composition '+(sources.length===2?'double ':'single ')+(mobile()?'mobile':'desktop');
   comp.style.width=(scale*100)+'%';
   comp.style.height=(scale*100)+'%';
-  // Both slots share the same available space: no overlap or cropping.
-  for(const {src} of images){
+  for(const src of sources) {
     const slot=document.createElement('div'); slot.className='slot';
     const img=document.createElement('img'); img.src=src; img.alt=''; img.draggable=false;
     slot.appendChild(img); comp.appendChild(slot);
   }
-  return comp;
+  journal.replaceChildren(comp);
+  status.textContent='';
+  lastShown=sources[sources.length-1];
 }
-async function selectComposition(token) {
-  if(!catalog.length) return;
-  const initial=nextFile();
-  let first, firstData;
-  try{firstData=await dimensionsOf(initial); first={src:initial, data:firstData};}
-  catch(e){console.warn(e); if(token===generation) schedule(1000); return;}
+async function show(token) {
+  const first=nextFile();
+  let firstData;
+  try { firstData=await getDimensions(first); }
+  catch(e) { console.warn(e); if(token===generation) schedule(1000); return; }
   if(token!==generation) return;
-  const wantDouble=Math.random() < (mobile() ? (firstData.orientation==='horizontal'?.25:0) : (firstData.orientation==='vertical'?.20:.15));
-  let chosen=[first];
-  if(wantDouble && catalog.length>1){
-    // Search a matching orientation; restore skipped entries into the queue.
+  const probability=mobile()
+    ? (firstData.orientation==='horizontal'?.25:0)
+    : (firstData.orientation==='vertical'?.20:.15);
+  const chosen=[first];
+  if(Math.random()<probability && catalog.length>1) {
     const skipped=[];
-    for(let i=0;i<catalog.length-1;i++){
+    for(let i=0;i<catalog.length-1;i++) {
       const candidate=nextFile();
-      if(candidate===initial){skipped.push(candidate);continue;}
-      try{
-        const d=await dimensionsOf(candidate);
-        if(token!==generation) return;
-        if(d.orientation===firstData.orientation){chosen.push({src:candidate,data:d}); break;}
-      }catch(e){console.warn(e);}
+      if(candidate===first) { skipped.push(candidate); continue; }
+      try {
+        const d=await getDimensions(candidate);
+        if(token!==generation) { queue=skipped.concat(candidate,queue); return; }
+        if(d.orientation===firstData.orientation) { chosen.push(candidate); break; }
+      } catch(e) { console.warn(e); }
       skipped.push(candidate);
     }
     queue=skipped.concat(queue);
   }
   if(token!==generation) return;
-  const comp=makeComposition(chosen,sizeFactor(chosen.length===2));
-  journal.replaceChildren(comp);
-  status.textContent='';
-  for(const p of chosen){ history.push(p.src); if(history.length>5)history.shift(); }
+  render(chosen,sizeFactor(chosen.length===2));
   schedule(INTERVAL);
 }
-function schedule(ms){clearTimeout(timer);timer=setTimeout(advance,ms);}
-function advance(){clearTimeout(timer);const token=++generation;selectComposition(token).catch(e=>{console.error(e);status.textContent='Erreur lors du chargement des photos';schedule(3000);});}
-journal.addEventListener('click',advance);
-journal.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();advance();}});
-async function start(){
-  catalog = IMAGE_NAMES.map(name => IMAGE_BASE + encodeURIComponent(name));
-  if (!catalog.length) { status.textContent='Aucune photo dans le catalogue'; return; }
-  advance();
+function schedule(ms) { clearTimeout(timer); timer=setTimeout(advance,ms); }
+function advance() {
+  clearTimeout(timer);
+  const token=++generation;
+  show(token).catch(e=>{console.error(e);status.textContent='Erreur de chargement';schedule(2000);});
 }
-start();
+// Pointer-up avoids the mobile click highlight/selection flash.
+journal.addEventListener('pointerdown',e=>{
+  if(e.pointerType!=='mouse') e.preventDefault();
+});
+journal.addEventListener('pointerup',e=>{
+  if(e.pointerType==='mouse' && e.button!==0) return;
+  advance();
+});
+journal.addEventListener('contextmenu',e=>e.preventDefault());
+journal.addEventListener('selectstart',e=>e.preventDefault());
+journal.addEventListener('keydown',e=>{
+  if(e.key==='Enter'||e.key===' ') { e.preventDefault(); advance(); }
+});
+fullscreen.addEventListener('click',async e=>{
+  e.stopPropagation();
+  try {
+    if(document.fullscreenElement) await document.exitFullscreen();
+    else if(document.documentElement.requestFullscreen) await document.documentElement.requestFullscreen();
+    else if(document.documentElement.webkitRequestFullscreen) document.documentElement.webkitRequestFullscreen();
+    else status.textContent='Plein écran indisponible sur ce navigateur';
+  } catch(err) {
+    console.warn(err);
+    status.textContent='Plein écran indisponible sur ce navigateur';
+  }
+});
+document.addEventListener('fullscreenchange',()=>{
+  fullscreen.setAttribute('aria-label',document.fullscreenElement?'Quitter le plein écran':'Activer le plein écran');
+});
+if(!catalog.length) status.textContent='Aucune photographie trouvée';
+else advance();
 })();
 </script>
 </body>
