@@ -33,12 +33,19 @@ html,body,#journal,#journal * {
   object-fit:contain; pointer-events:none; -webkit-user-drag:none;
 }
 #fullscreen {
-  position:fixed; right:12px; bottom:12px; z-index:10;
-  width:30px; height:30px; border:0; padding:5px;
-  background:transparent; color:#c6c6c6; cursor:pointer;
+  position:fixed;
+  right:max(12px, env(safe-area-inset-right));
+  bottom:max(14px, env(safe-area-inset-bottom));
+  z-index:9999;
+  width:40px; height:40px;
+  border:1px solid #e2e2e2; border-radius:5px;
+  padding:9px; background:rgba(255,255,255,.92);
+  color:#999; opacity:.78; cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
   -webkit-tap-highlight-color:transparent; touch-action:manipulation;
 }
-#fullscreen svg { width:20px; height:20px; display:block; }
+#fullscreen:hover, #fullscreen:focus-visible { opacity:1; color:#666; }
+#fullscreen svg { width:20px; height:20px; display:block; flex:none; }
 #fullscreen:focus { outline:none; }
 #fullscreen:focus-visible { outline:1px solid #aaa; }
 #status {
@@ -58,7 +65,7 @@ html,body,#journal,#journal * {
 (() => {
 'use strict';
 // Photographs are listed locally: no GitHub API request.
-const IMAGE_NAMES = [
+// 131 different files; shuffled before each cycle, not a short repeating selection.\nconst IMAGE_NAMES = [
   "1000038011.jpg",
   "1000038012.jpg",
   "1000038014.jpg",
