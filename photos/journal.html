@@ -5,181 +5,133 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Journal</title>
 <style>
-  * { box-sizing: border-box; }
-  html, body { margin: 0; width: 100%; height: 100%; background: #fff; overflow: hidden; }
-  body { font-family: Arial, sans-serif; }
-  #journal { position: fixed; inset: 0; display: flex; justify-content: center; align-items: center; padding: 4vmin; cursor: pointer; touch-action: manipulation; }
-  .composition { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; gap: 3vmin; }
-  .composition.double.mobile { flex-direction: column; }
-  .composition.double.desktop { flex-direction: row; }
-  .slot { min-width: 0; min-height: 0; display: flex; align-items: center; justify-content: center; flex: 1; width: 100%; height: 100%; }
-  .composition.double.mobile .slot { height: 50%; }
-  .composition.double.desktop .slot { width: 50%; }
-  .slot img { display: block; max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain; user-select: none; -webkit-user-drag: none; pointer-events: none; }
-  #status { position: fixed; left: 12px; bottom: 12px; font-size: 12px; color: #888; pointer-events: none; }
+* { box-sizing: border-box; }
+html, body { width:100%; height:100%; margin:0; overflow:hidden; background:white; }
+body { font-family:Arial,sans-serif; }
+#journal { position:fixed; inset:0; padding:4vmin; display:flex; align-items:center; justify-content:center; cursor:pointer; touch-action:manipulation; }
+.composition { width:100%; height:100%; display:flex; align-items:center; justify-content:center; gap:3vmin; }
+.composition.double.mobile { flex-direction:column; }
+.composition.double.desktop { flex-direction:row; }
+.slot { min-width:0; min-height:0; display:flex; justify-content:center; align-items:center; flex:1; width:100%; height:100%; }
+.slot img { display:block; max-width:100%; max-height:100%; object-fit:contain; width:auto; height:auto; pointer-events:none; user-select:none; -webkit-user-drag:none; }
+#status { position:fixed; left:14px; bottom:12px; font:12px Arial,sans-serif; color:#777; pointer-events:none; }
 </style>
 </head>
 <body>
-<main id="journal" role="button" tabindex="0" aria-label="Afficher la photographie suivante"></main>
+<main id="journal" role="button" tabindex="0" aria-label="Photo suivante"></main>
 <div id="status" aria-live="polite"></div>
 <script>
 (() => {
-  'use strict';
-  // Ce dossier doit être à la racine du dépôt public GitHub Pages.
-  const OWNER = 'guillaumelupin';
-  const REPO = 'guillaumelupin.github.io';
-  const BRANCH = 'main';
-  const FOLDER = 'image';
-  const INTERVAL = 10000;
-  const MOBILE_MAX = 700;
-  const journal = document.getElementById('journal');
-  const status = document.getElementById('status');
-  const imagePattern = /\.(jpe?g|png|webp|gif|avif)$/i;
-  let catalog = [];
-  let remaining = [];
-  let lastShown = new Set();
-  let timer = null;
-  let generation = 0;
-  let busy = false;
-  const dimensions = new Map();
-
-  function shuffle(items) {
-    const result = [...items];
-    for (let i = result.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [result[i], result[j]] = [result[j], result[i]];
-    }
-    return result;
+'use strict';
+// Correct GitHub folder: photos/images, beside photos/journal.html.
+const API = 'https://api.github.com/repos/guillaumelupin/guillaumelupin.github.io/contents/photos/images?ref=main';
+const IMAGE_BASE = '/photos/images/';
+const INTERVAL = 10000;
+const MOBILE_MAX = 700;
+const journal = document.getElementById('journal');
+const status = document.getElementById('status');
+let catalog = [], queue = [], history = [], timer = null, generation = 0;
+const dimensions = new Map();
+const random = (a,b) => a + Math.random()*(b-a);
+const mobile = () => window.innerWidth <= MOBILE_MAX;
+function shuffle(items) {
+  const a=[...items];
+  for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}
+  return a;
+}
+function nextFile() {
+  if(!queue.length) {
+    queue=shuffle(catalog);
+    if(history.length && queue.length>1 && queue[0]===history[history.length-1]) [queue[0],queue[1]]=[queue[1],queue[0]];
   }
-  function replenish() {
-    remaining = shuffle(catalog);
-    // Évite de recommencer un cycle avec la dernière image montrée, si possible.
-    if (remaining.length > 1 && lastShown.has(remaining[remaining.length - 1].url)) {
-      const candidate = remaining.findIndex(item => !lastShown.has(item.url));
-      if (candidate !== -1) [remaining[candidate], remaining[remaining.length - 1]] = [remaining[remaining.length - 1], remaining[candidate]];
-    }
-  }
-  function take(exclude = new Set(), orientation = null) {
-    if (!remaining.length) replenish();
-    let index = -1;
-    for (let i = remaining.length - 1; i >= 0; i--) {
-      const item = remaining[i];
-      if (exclude.has(item.url)) continue;
-      if (orientation && dimensions.get(item.url)?.orientation !== orientation) continue;
-      index = i; break;
-    }
-    if (index < 0) return null;
-    return remaining.splice(index, 1)[0];
-  }
-  function preload(url) {
-    return new Promise((resolve, reject) => {
-      const img = new Image();
-      img.onload = () => resolve(img);
-      img.onerror = () => reject(new Error('Image inaccessible : ' + url));
-      img.src = url;
-    });
-  }
-  async function inspect(item) {
-    if (dimensions.has(item.url)) return dimensions.get(item.url);
-    const img = await preload(item.url);
-    const info = { orientation: img.naturalHeight > img.naturalWidth ? 'vertical' : 'horizontal' };
-    dimensions.set(item.url, info);
-    return info;
-  }
-  function isMobile() { return window.innerWidth <= MOBILE_MAX; }
-  function doubleChance(orientation) {
-    if (isMobile()) return orientation === 'horizontal' ? 0.25 : 0;
-    return orientation === 'vertical' ? 0.20 : 0.15;
-  }
-  function singleScale() {
-    const r = Math.random();
-    if (r < 0.01) return 0.10 + Math.random() * 0.035; // miniature 1 %
-    if (r < 0.06) return 0.28 + Math.random() * 0.15;  // petite 5 %
-    if (r < 0.25) return 0.58 + Math.random() * 0.16;  // moyenne 19 %
-    return 0.88 + Math.random() * 0.12;                // grande 75 %
-  }
-  function build(items, scale) {
-    const double = items.length === 2;
-    const composition = document.createElement('div');
-    composition.className = `composition ${double ? 'double' : 'single'} ${isMobile() ? 'mobile' : 'desktop'}`;
-    for (const item of items) {
-      const slot = document.createElement('div');
-      slot.className = 'slot';
-      const img = document.createElement('img');
-      img.src = item.url;
-      img.alt = '';
-      img.draggable = false;
-      // Même facteur de taille pour les deux photos ; proportions préservées.
-      img.style.maxWidth = `${scale * 100}%`;
-      img.style.maxHeight = `${scale * 100}%`;
-      slot.appendChild(img);
-      composition.appendChild(slot);
-    }
-    return composition;
-  }
-  async function next() {
-    if (busy || !catalog.length) return;
-    busy = true;
-    clearTimeout(timer);
-    const token = ++generation;
-    const rejected = new Set();
-    try {
-      let first = null, orientation = null;
-      for (let attempt = 0; attempt < catalog.length; attempt++) {
-        const candidate = take(new Set([...lastShown, ...rejected])) || take(rejected);
-        if (!candidate) break;
-        try { const info = await inspect(candidate); first = candidate; orientation = info.orientation; break; }
-        catch (error) { console.warn(error); rejected.add(candidate.url); }
-      }
-      if (!first) { status.textContent = 'Impossible de charger les photographies.'; return; }
-      const selected = [first];
-      if (Math.random() < doubleChance(orientation)) {
-        // On examine les orientations inconnues sans consommer l'ordre aléatoire.
-        const candidates = shuffle(remaining.filter(x => x.url !== first.url && !lastShown.has(x.url)));
-        for (const candidate of candidates) {
-          try {
-            const info = await inspect(candidate);
-            if (info.orientation === orientation) {
-              const i = remaining.findIndex(x => x.url === candidate.url);
-              if (i >= 0) remaining.splice(i, 1);
-              selected.push(candidate);
-              break;
-            }
-          } catch (error) { console.warn(error); }
-        }
-      }
-      if (token !== generation) return;
-      const scale = selected.length === 2 ? 0.92 + Math.random() * 0.08 : singleScale();
-      journal.replaceChildren(build(selected, scale));
-      lastShown = new Set(selected.map(x => x.url));
-      status.textContent = '';
-    } finally {
-      busy = false;
-      timer = setTimeout(next, INTERVAL);
-    }
-  }
-  async function start() {
-    status.textContent = 'Chargement…';
-    try {
-      const url = `https://api.github.com/repos/${OWNER}/${REPO}/contents/${FOLDER}?ref=${BRANCH}`;
-      const response = await fetch(url);
-      if (!response.ok) throw new Error('Réponse GitHub : ' + response.status);
-      const files = await response.json();
-      if (!Array.isArray(files)) throw new Error('Dossier introuvable');
-      catalog = files.filter(f => f.type === 'file' && imagePattern.test(f.name)).map(f => ({url: `/${FOLDER}/${encodeURIComponent(f.name)}`}));
-      if (!catalog.length) throw new Error('Aucune image dans le dossier');
-      replenish();
-      await next();
-    } catch (error) {
-      console.error(error);
-      status.textContent = 'Impossible de lire le dossier image/ sur GitHub.';
-    }
-  }
-  journal.addEventListener('click', next);
-  journal.addEventListener('keydown', event => {
-    if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); next(); }
+  return queue.shift();
+}
+function load(src) {
+  return new Promise((resolve,reject)=>{
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = () => reject(new Error('Image introuvable : '+src));
+    img.src = src;
   });
-  start();
+}
+async function dimensionsOf(src) {
+  if(dimensions.has(src)) return dimensions.get(src);
+  const img=await load(src);
+  const d={width:img.naturalWidth,height:img.naturalHeight, orientation:img.naturalWidth>=img.naturalHeight?'horizontal':'vertical'};
+  dimensions.set(src,d);
+  return d;
+}
+function sizeFactor(double) {
+  if(double) return random(.90,.98);
+  const r=Math.random();
+  if(r<.01) return random(.065,.10); // very rare thumb-size miniature
+  if(r<.06) return random(.22,.40); // small
+  if(r<.25) return random(.57,.75); // medium
+  return random(.88,.99); // usually large
+}
+function makeComposition(images, scale) {
+  const comp=document.createElement('div');
+  const isDouble=images.length===2;
+  comp.className='composition '+(isDouble?'double ':'single ')+(mobile()?'mobile':'desktop');
+  const margin=(1-scale)*50;
+  comp.style.width=(scale*100)+'%';
+  comp.style.height=(scale*100)+'%';
+  // Both slots share the same available space: no overlap or cropping.
+  for(const {src} of images){
+    const slot=document.createElement('div'); slot.className='slot';
+    const img=document.createElement('img'); img.src=src; img.alt=''; img.draggable=false;
+    slot.appendChild(img); comp.appendChild(slot);
+  }
+  return comp;
+}
+async function selectComposition(token) {
+  if(!catalog.length) return;
+  const initial=nextFile();
+  let first, firstData;
+  try{firstData=await dimensionsOf(initial); first={src:initial, data:firstData};}
+  catch(e){console.warn(e); if(token===generation) schedule(1000); return;}
+  if(token!==generation) return;
+  const wantDouble=Math.random() < (mobile() ? (firstData.orientation==='horizontal'?.25:0) : (firstData.orientation==='vertical'?.20:.15));
+  let chosen=[first];
+  if(wantDouble && catalog.length>1){
+    // Search a matching orientation; restore skipped entries into the queue.
+    const skipped=[];
+    for(let i=0;i<catalog.length-1;i++){
+      const candidate=nextFile();
+      if(candidate===initial){skipped.push(candidate);continue;}
+      try{
+        const d=await dimensionsOf(candidate);
+        if(token!==generation) return;
+        if(d.orientation===firstData.orientation){chosen.push({src:candidate,data:d}); break;}
+      }catch(e){console.warn(e);}
+      skipped.push(candidate);
+    }
+    queue=skipped.concat(queue);
+  }
+  if(token!==generation) return;
+  const comp=makeComposition(chosen,sizeFactor(chosen.length===2));
+  journal.replaceChildren(comp);
+  status.textContent='';
+  for(const p of chosen){ history.push(p.src); if(history.length>5)history.shift(); }
+  schedule(INTERVAL);
+}
+function schedule(ms){clearTimeout(timer);timer=setTimeout(advance,ms);}
+function advance(){clearTimeout(timer);const token=++generation;selectComposition(token).catch(e=>{console.error(e);status.textContent='Erreur lors du chargement des photos';schedule(3000);});}
+journal.addEventListener('click',advance);
+journal.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();advance();}});
+async function start(){
+  status.textContent='Chargement des photos…';
+  try {
+    const response=await fetch(API,{cache:'no-store'});
+    if(!response.ok) throw new Error('GitHub API: HTTP '+response.status);
+    const files=await response.json();
+    if(!Array.isArray(files))throw new Error('Réponse GitHub inattendue');
+    catalog=files.filter(f=>f.type==='file' && /\.(jpg|jpeg|png|webp|gif)$/i.test(f.name)).map(f=>IMAGE_BASE+encodeURIComponent(f.name));
+    if(!catalog.length) throw new Error('Aucune photo trouvée dans photos/images/');
+    advance();
+  } catch(e){console.error(e);status.textContent='Impossible de charger photos/images/ : '+e.message;}
+}
+start();
 })();
 </script>
 </body>
