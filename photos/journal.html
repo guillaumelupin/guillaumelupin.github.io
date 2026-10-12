@@ -24,8 +24,141 @@ body { font-family:Arial,sans-serif; }
 (() => {
 'use strict';
 // Correct GitHub folder: photos/images, beside photos/journal.html.
-const API = 'https://api.github.com/repos/guillaumelupin/guillaumelupin.github.io/contents/photos/images?ref=main';
+// Static image list: no GitHub API request required.
 const IMAGE_BASE = '/photos/images/';
+const IMAGE_NAMES = [
+  "1000038011.jpg",
+  "1000038012.jpg",
+  "1000038014.jpg",
+  "1000038019.jpeg",
+  "1000038020.jpg",
+  "1000038022.jpg",
+  "1000038023.jpeg",
+  "1000038514.jpg",
+  "1000038519.jpg",
+  "1000038521.jpeg",
+  "1000038523.jpg",
+  "1000039150.jpg",
+  "1000039156.jpeg",
+  "1000039160.jpg",
+  "1000039161.jpg",
+  "1000039162.jpg",
+  "1000039168.jpeg",
+  "1000039169.jpeg",
+  "1000039173.jpg",
+  "1000039176.jpg",
+  "1000039178.jpg",
+  "1000039183.jpeg",
+  "1000039184.jpg",
+  "1000039186.jpg",
+  "1000039188.jpg",
+  "1000039192.jpg",
+  "1000039194.jpeg",
+  "1000039195.jpg",
+  "1000039198.jpg",
+  "1000039203.jpeg",
+  "1000039204.jpeg",
+  "1000039207.jpeg",
+  "1000039207.jpg",
+  "1000039208.jpeg",
+  "1000039211.jpeg",
+  "1000039212.jpg",
+  "1000039214.jpg",
+  "1000039215.jpg",
+  "1000039216.jpg",
+  "1000039219.jpg",
+  "1000039222.png",
+  "1000039233.jpg",
+  "1000039238.jpg",
+  "1000039241.jpg",
+  "1000039243.jpg",
+  "1000039244.jpg",
+  "1000040489.jpeg",
+  "1000040646.jpeg",
+  "1000040647.jpeg",
+  "1000040653.jpeg",
+  "1000040654.jpeg",
+  "1000040658.jpeg",
+  "1000040661.jpeg",
+  "1000040664.jpeg",
+  "1000040666.jpeg",
+  "1000040674.jpeg",
+  "1000040675.jpeg",
+  "1000040676.jpeg",
+  "1000040680.jpeg",
+  "1000040681.jpeg",
+  "1000040682.jpeg",
+  "1000040684.jpeg",
+  "1000040692.jpeg",
+  "1000040700.jpeg",
+  "1000040703.jpeg",
+  "1000040710.jpeg",
+  "1000040714.jpeg",
+  "1000040716.jpeg",
+  "1000040721.jpeg",
+  "1000042477.jpeg",
+  "1000042479.jpeg",
+  "1000042480.jpeg",
+  "1000042481.jpeg",
+  "1000042482.jpeg",
+  "1000042487.jpeg",
+  "1000042488.jpeg",
+  "1000042489.jpeg",
+  "1000042490.jpeg",
+  "1000042492.jpeg",
+  "1000042493.jpeg",
+  "1000042494.jpeg",
+  "1000042495.jpeg",
+  "1000042496.jpeg",
+  "1000045358.png",
+  "1000045359.png",
+  "1000045360.png",
+  "1000045361.png",
+  "1000045362.png",
+  "1000045363.png",
+  "1000045364.png",
+  "1000045365.png",
+  "1000045366.png",
+  "1000045368.png",
+  "1000045369.png",
+  "1000045371.png",
+  "1000045372.png",
+  "1000045373.png",
+  "1000045374.png",
+  "1000045375.png",
+  "1000045376.png",
+  "1000045377.png",
+  "1000045378.png",
+  "1000045379.png",
+  "1000045380.png",
+  "1000045381.png",
+  "1000045383.png",
+  "1000045384.png",
+  "1000045385.png",
+  "1000045386.png",
+  "1000045387.png",
+  "1000045388.png",
+  "1000045389.png",
+  "1000045390.png",
+  "1000045391.png",
+  "1000045392.png",
+  "1000045393.png",
+  "1000045394.png",
+  "1000045395.png",
+  "1000045396.png",
+  "1000045397.png",
+  "1000045398.png",
+  "1000045399.png",
+  "1000045400.png",
+  "1000045401.png",
+  "1000045402.png",
+  "1000045403.png",
+  "1000045404.png",
+  "1000045405.png",
+  "IMG_0954.JPG",
+  "1000038012 (1).jpg",
+  "1000039150 (1).jpg"
+];
 const INTERVAL = 10000;
 const MOBILE_MAX = 700;
 const journal = document.getElementById('journal');
@@ -120,16 +253,9 @@ function advance(){clearTimeout(timer);const token=++generation;selectCompositio
 journal.addEventListener('click',advance);
 journal.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();advance();}});
 async function start(){
-  status.textContent='Chargement des photos…';
-  try {
-    const response=await fetch(API,{cache:'no-store'});
-    if(!response.ok) throw new Error('GitHub API: HTTP '+response.status);
-    const files=await response.json();
-    if(!Array.isArray(files))throw new Error('Réponse GitHub inattendue');
-    catalog=files.filter(f=>f.type==='file' && /\.(jpg|jpeg|png|webp|gif)$/i.test(f.name)).map(f=>IMAGE_BASE+encodeURIComponent(f.name));
-    if(!catalog.length) throw new Error('Aucune photo trouvée dans photos/images/');
-    advance();
-  } catch(e){console.error(e);status.textContent='Impossible de charger photos/images/ : '+e.message;}
+  catalog = IMAGE_NAMES.map(name => IMAGE_BASE + encodeURIComponent(name));
+  if (!catalog.length) { status.textContent='Aucune photo dans le catalogue'; return; }
+  advance();
 }
 start();
 })();
