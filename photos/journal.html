@@ -35,90 +35,93 @@ const journal=document.getElementById('journal');
 const fullscreen=document.getElementById('fullscreen');
 const status=document.getElementById('status');
 const dimensions=new Map();
-let queue=[],lastShown='',timer=null,requestId=0;
+let queue=[],lastShown='',timer=null,requestId=0,ready=null,preparing=null,shown=null;
 const isMobile=()=>innerWidth<=700;
 const rand=(a,b)=>a+Math.random()*(b-a);
 function shuffle(items){
-  const a=items.slice();
-  for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}
-  return a;
+ const a=items.slice();
+ for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a;
 }
 function nextFile(){
-  if(!queue.length){queue=shuffle(catalog);if(queue.length>1&&queue[0]===lastShown)[queue[0],queue[1]]=[queue[1],queue[0]]}
-  return queue.shift();
+ if(!queue.length){queue=shuffle(catalog);if(queue.length>1&&queue[0]===lastShown)[queue[0],queue[1]]=[queue[1],queue[0]]}
+ return queue.shift();
 }
 function load(src){
-  return new Promise((resolve,reject)=>{
-    const img=new Image();
-    img.onload=()=>resolve({src,orientation:img.naturalWidth>=img.naturalHeight?'horizontal':'vertical'});
-    img.onerror=()=>reject(new Error('Image inaccessible : '+src));
-    img.src=src;
-  });
+ return new Promise((resolve,reject)=>{
+  const img=new Image();
+  img.onload=()=>resolve({src,orientation:img.naturalWidth>=img.naturalHeight?'horizontal':'vertical'});
+  img.onerror=()=>reject(new Error('Image inaccessible : '+src));
+  img.src=src;
+ });
 }
 async function inspect(src){
-  if(dimensions.has(src))return {src,orientation:dimensions.get(src)};
-  const data=await load(src);
-  dimensions.set(src,data.orientation);
-  return data;
+ if(dimensions.has(src))return {src,orientation:dimensions.get(src)};
+ const data=await load(src);dimensions.set(src,data.orientation);return data;
 }
 function scaleFor(two){
-  if(two)return rand(.90,.98);
-  const r=Math.random();
-  if(r<.01)return rand(.065,.10);
-  if(r<.06)return rand(.22,.40);
-  if(r<.25)return rand(.57,.75);
-  return rand(.88,.99);
+ if(two)return rand(.90,.98);
+ const r=Math.random();if(r<.01)return rand(.065,.10);if(r<.06)return rand(.22,.40);
+ if(r<.25)return rand(.57,.75);return rand(.88,.99);
 }
-function display(sources){
-  const wrap=document.createElement('div');
-  wrap.className='composition '+(sources.length===2?'double ':'single ')+(isMobile()?'mobile':'desktop');
-  const s=scaleFor(sources.length===2);
-  wrap.style.width=s*100+'%';wrap.style.height=s*100+'%';
-  sources.forEach(src=>{
-    const slot=document.createElement('div'),img=document.createElement('img');
-    slot.className='slot';img.src=src;img.alt='';img.draggable=false;
-    slot.appendChild(img);wrap.appendChild(slot);
-  });
-  journal.replaceChildren(wrap);
-  status.textContent='';
-  lastShown=sources[sources.length-1];
+async function makeComposition(){
+ let first=null;
+ for(let i=0;i<catalog.length;i++){
+  const src=nextFile();
+  try{first=await inspect(src);break}catch(e){console.warn(e)}
+ }
+ if(!first)throw Error('Aucune image disponible');
+ const chosen=[first.src];
+ const probability=isMobile()?(first.orientation==='horizontal'?.25:0):(first.orientation==='vertical'?.20:.15);
+ if(Math.random()<probability&&catalog.length>1){
+  const skipped=[];
+  for(let i=0;i<Math.min(catalog.length-1,5);i++){
+   const candidate=nextFile();
+   try{
+    const data=await inspect(candidate);
+    if(data.orientation===first.orientation){chosen.push(candidate);break}
+   }catch(e){console.warn(e)}
+   skipped.push(candidate);
+  }
+  queue=skipped.concat(queue);
+ }
+ return {sources:chosen,scale:scaleFor(chosen.length===2),mobile:isMobile()};
+}
+function prepare(){
+ if(ready)return Promise.resolve(ready);
+ if(!preparing){
+  preparing=makeComposition().then(c=>{ready=c;return c}).catch(e=>{
+   console.warn(e);status.textContent='Chargement des photographies impossible';return null;
+  }).finally(()=>{preparing=null});
+ }
+ return preparing;
+}
+function display(c){
+ const wrap=document.createElement('div');
+ wrap.className='composition '+(c.sources.length===2?'double ':'single ')+(c.mobile?'mobile':'desktop');
+ wrap.style.width=c.scale*100+'%';wrap.style.height=c.scale*100+'%';
+ for(const src of c.sources){
+  const slot=document.createElement('div'),img=document.createElement('img');
+  slot.className='slot';img.src=src;img.alt='';img.draggable=false;
+  slot.appendChild(img);wrap.appendChild(slot);
+ }
+ journal.replaceChildren(wrap);
+ status.textContent='';lastShown=c.sources[c.sources.length-1];shown=c;
 }
 function schedule(){clearTimeout(timer);timer=setTimeout(advance,10000)}
-async function show(id){
-  let first;
-  for(let attempts=0;attempts<catalog.length;attempts++){
-    const src=nextFile();
-    try{first=await inspect(src);break}
-    catch(e){console.warn(e)}
-    if(id!==requestId)return;
-  }
-  if(id!==requestId)return;
-  if(!first){status.textContent='Impossible de charger les photographies';schedule();return}
-  const chosen=[first.src];
-  const probability=isMobile()?(first.orientation==='horizontal'?.25:0):(first.orientation==='vertical'?.20:.15);
-  if(Math.random()<probability&&catalog.length>1){
-    const skipped=[];
-    // Limit extra loads so a slow or missing image never blocks navigation.
-    for(let i=0;i<Math.min(catalog.length-1,8);i++){
-      const candidate=nextFile();
-      if(candidate===first.src){skipped.push(candidate);continue}
-      try{
-        const data=await inspect(candidate);
-        if(id!==requestId)return;
-        if(data.orientation===first.orientation){chosen.push(candidate);break}
-      }catch(e){console.warn(e)}
-      skipped.push(candidate);
-    }
-    queue=skipped.concat(queue);
-  }
-  if(id!==requestId)return;
-  display(chosen);
-  schedule();
-}
 function advance(){
-  clearTimeout(timer);
+ clearTimeout(timer);
+ if(ready){
+  const c=ready;ready=null;
+  display(c);schedule();prepare();
+ }else{
+  // Never start competing image loads on repeated clicks.
   const id=++requestId;
-  show(id).catch(err=>{console.error(err);status.textContent='Erreur de chargement';schedule()});
+  prepare().then(c=>{
+   if(id!==requestId||!c)return;
+   if(ready===c)ready=null;
+   display(c);schedule();prepare();
+  });
+ }
 }
 journal.addEventListener('click',advance);
 journal.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();advance()}});
@@ -126,9 +129,8 @@ journal.addEventListener('contextmenu',e=>e.preventDefault());
 let touchStartX=0,touchStartY=0;
 journal.addEventListener('touchstart',e=>{touchStartX=e.touches[0].clientX;touchStartY=e.touches[0].clientY},{passive:true});
 journal.addEventListener('touchend',e=>{
-  const dx=e.changedTouches[0].clientX-touchStartX;
-  const dy=e.changedTouches[0].clientY-touchStartY;
-  if(Math.abs(dx)>55&&Math.abs(dx)>Math.abs(dy)){e.preventDefault();advance()}
+ const dx=e.changedTouches[0].clientX-touchStartX,dy=e.changedTouches[0].clientY-touchStartY;
+ if(Math.abs(dx)>55&&Math.abs(dx)>Math.abs(dy)){e.preventDefault();advance()}
 },{passive:false});
 fullscreen.addEventListener('click',async e=>{
   e.stopPropagation();
