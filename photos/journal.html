@@ -1,330 +1,151 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="fr">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Journal</title>
 <style>
-* { box-sizing:border-box; }
-html,body { margin:0; width:100%; height:100%; overflow:hidden; background:#fff; }
-body { font-family:Arial,sans-serif; }
-html,body,#journal,#journal * {
-  -webkit-tap-highlight-color:transparent !important;
-  -webkit-user-select:none; user-select:none;
-  -webkit-touch-callout:none;
-}
-#journal {
-  position:fixed; inset:0; padding:4vmin; display:flex;
-  align-items:center; justify-content:center; cursor:pointer;
-  touch-action:manipulation; outline:none;
-}
-.composition {
-  display:flex; align-items:center; justify-content:center;
-  gap:3vmin; width:100%; height:100%;
-}
-.composition.double.mobile { flex-direction:column; }
-.composition.double.desktop { flex-direction:row; }
-.slot {
-  flex:1; min-width:0; min-height:0; width:100%; height:100%;
-  display:flex; align-items:center; justify-content:center;
-}
-.slot img {
-  display:block; width:auto; height:auto; max-width:100%; max-height:100%;
-  object-fit:contain; pointer-events:none; -webkit-user-drag:none;
-}
-#fullscreen {
-  position:fixed;
-  right:max(12px, env(safe-area-inset-right));
-  bottom:max(14px, env(safe-area-inset-bottom));
-  z-index:9999;
-  width:40px; height:40px;
-  border:1px solid #e2e2e2; border-radius:5px;
-  padding:9px; background:rgba(255,255,255,.92);
-  color:#999; opacity:.78; cursor:pointer;
-  display:flex; align-items:center; justify-content:center;
-  -webkit-tap-highlight-color:transparent; touch-action:manipulation;
-}
-#fullscreen:hover, #fullscreen:focus-visible { opacity:1; color:#666; }
-#fullscreen svg { width:20px; height:20px; display:block; flex:none; }
-#fullscreen:focus { outline:none; }
-#fullscreen:focus-visible { outline:1px solid #aaa; }
-#status {
-  position:fixed; left:12px; bottom:12px;
-  color:#888; font-size:12px; pointer-events:none;
-}
+*{box-sizing:border-box}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#fff}
+body{font-family:Arial,sans-serif}
+#journal{position:fixed;inset:0;padding:4vmin;display:flex;align-items:center;justify-content:center;cursor:pointer;touch-action:manipulation;outline:none;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none}
+.composition{display:flex;align-items:center;justify-content:center;gap:3vmin;width:100%;height:100%;pointer-events:none}
+.composition.double.mobile{flex-direction:column}
+.composition.double.desktop{flex-direction:row}
+.slot{flex:1;min-width:0;min-height:0;width:100%;height:100%;display:flex;align-items:center;justify-content:center}
+.slot img{display:block;width:auto;height:auto;max-width:100%;max-height:100%;object-fit:contain;pointer-events:none;-webkit-user-drag:none}
+#fullscreen{position:fixed;right:max(12px,env(safe-area-inset-right));bottom:max(14px,env(safe-area-inset-bottom));z-index:9999;width:40px;height:40px;border:1px solid #e2e2e2;border-radius:5px;padding:9px;background:rgba(255,255,255,.92);color:#999;opacity:.85;cursor:pointer;display:flex;align-items:center;justify-content:center;touch-action:manipulation}
+#fullscreen:hover,#fullscreen:focus-visible{opacity:1;color:#555}
+#fullscreen svg{width:20px;height:20px;display:block}
+#status{position:fixed;left:12px;bottom:12px;color:#888;font-size:12px;pointer-events:none}
 </style>
 </head>
 <body>
 <main id="journal" role="button" tabindex="0" aria-label="Photo suivante"></main>
 <button id="fullscreen" type="button" aria-label="Activer le plein écran" title="Plein écran">
-<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round">
-<path d="M8 3H3v5 M16 3h5v5 M3 16v5h5 M21 16v5h-5"/>
-</svg></button>
-<div id="status" aria-live="polite"></div>
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"><path d="M8 3H3v5 M16 3h5v5 M3 16v5h5 M21 16v5h-5"/></svg>
+</button>
+<div id="status" role="status" aria-live="polite"></div>
 <script>
 (() => {
 'use strict';
-// Photographs are listed locally: no GitHub API request.
-// 131 different files; shuffled before each cycle, not a short repeating selection.\nconst IMAGE_NAMES = [
-  "1000038011.jpg",
-  "1000038012.jpg",
-  "1000038014.jpg",
-  "1000038019.jpeg",
-  "1000038020.jpg",
-  "1000038022.jpg",
-  "1000038023.jpeg",
-  "1000038514.jpg",
-  "1000038519.jpg",
-  "1000038521.jpeg",
-  "1000038523.jpg",
-  "1000039150.jpg",
-  "1000039156.jpeg",
-  "1000039160.jpg",
-  "1000039161.jpg",
-  "1000039162.jpg",
-  "1000039168.jpeg",
-  "1000039169.jpeg",
-  "1000039173.jpg",
-  "1000039176.jpg",
-  "1000039178.jpg",
-  "1000039183.jpeg",
-  "1000039184.jpg",
-  "1000039186.jpg",
-  "1000039188.jpg",
-  "1000039192.jpg",
-  "1000039194.jpeg",
-  "1000039195.jpg",
-  "1000039198.jpg",
-  "1000039203.jpeg",
-  "1000039204.jpeg",
-  "1000039207.jpeg",
-  "1000039207.jpg",
-  "1000039208.jpeg",
-  "1000039211.jpeg",
-  "1000039212.jpg",
-  "1000039214.jpg",
-  "1000039215.jpg",
-  "1000039216.jpg",
-  "1000039219.jpg",
-  "1000039222.png",
-  "1000039233.jpg",
-  "1000039238.jpg",
-  "1000039241.jpg",
-  "1000039243.jpg",
-  "1000039244.jpg",
-  "1000040489.jpeg",
-  "1000040646.jpeg",
-  "1000040647.jpeg",
-  "1000040653.jpeg",
-  "1000040654.jpeg",
-  "1000040658.jpeg",
-  "1000040661.jpeg",
-  "1000040664.jpeg",
-  "1000040666.jpeg",
-  "1000040674.jpeg",
-  "1000040675.jpeg",
-  "1000040676.jpeg",
-  "1000040680.jpeg",
-  "1000040681.jpeg",
-  "1000040682.jpeg",
-  "1000040684.jpeg",
-  "1000040692.jpeg",
-  "1000040700.jpeg",
-  "1000040703.jpeg",
-  "1000040710.jpeg",
-  "1000040714.jpeg",
-  "1000040716.jpeg",
-  "1000040721.jpeg",
-  "1000042477.jpeg",
-  "1000042479.jpeg",
-  "1000042480.jpeg",
-  "1000042481.jpeg",
-  "1000042482.jpeg",
-  "1000042487.jpeg",
-  "1000042488.jpeg",
-  "1000042489.jpeg",
-  "1000042490.jpeg",
-  "1000042492.jpeg",
-  "1000042493.jpeg",
-  "1000042494.jpeg",
-  "1000042495.jpeg",
-  "1000042496.jpeg",
-  "1000045358.png",
-  "1000045359.png",
-  "1000045360.png",
-  "1000045361.png",
-  "1000045362.png",
-  "1000045363.png",
-  "1000045364.png",
-  "1000045365.png",
-  "1000045366.png",
-  "1000045368.png",
-  "1000045369.png",
-  "1000045371.png",
-  "1000045372.png",
-  "1000045373.png",
-  "1000045374.png",
-  "1000045375.png",
-  "1000045376.png",
-  "1000045377.png",
-  "1000045378.png",
-  "1000045379.png",
-  "1000045380.png",
-  "1000045381.png",
-  "1000045383.png",
-  "1000045384.png",
-  "1000045385.png",
-  "1000045386.png",
-  "1000045387.png",
-  "1000045388.png",
-  "1000045389.png",
-  "1000045390.png",
-  "1000045391.png",
-  "1000045392.png",
-  "1000045393.png",
-  "1000045394.png",
-  "1000045395.png",
-  "1000045396.png",
-  "1000045397.png",
-  "1000045398.png",
-  "1000045399.png",
-  "1000045400.png",
-  "1000045401.png",
-  "1000045402.png",
-  "1000045403.png",
-  "1000045404.png",
-  "1000045405.png",
-  "IMG_0954.JPG",
-  "1000038012 (1).jpg",
-  "1000039150 (1).jpg"
-];
-const IMAGE_BASE='/photos/images/';
-const INTERVAL=10000;
-const MOBILE_MAX=700;
+const IMAGE_NAMES = ["1000038011.jpg", "1000038012.jpg", "1000038014.jpg", "1000038019.jpeg", "1000038020.jpg", "1000038022.jpg", "1000038023.jpeg", "1000038514.jpg", "1000038519.jpg", "1000038521.jpeg", "1000038523.jpg", "1000039150.jpg", "1000039156.jpeg", "1000039160.jpg", "1000039161.jpg", "1000039162.jpg", "1000039168.jpeg", "1000039169.jpeg", "1000039173.jpg", "1000039176.jpg", "1000039178.jpg", "1000039183.jpeg", "1000039184.jpg", "1000039186.jpg", "1000039188.jpg", "1000039192.jpg", "1000039194.jpeg", "1000039195.jpg", "1000039198.jpg", "1000039203.jpeg", "1000039204.jpeg", "1000039207.jpeg", "1000039207.jpg", "1000039208.jpeg", "1000039211.jpeg", "1000039212.jpg", "1000039214.jpg", "1000039215.jpg", "1000039216.jpg", "1000039219.jpg", "1000039222.png", "1000039233.jpg", "1000039238.jpg", "1000039241.jpg", "1000039243.jpg", "1000039244.jpg", "1000040489.jpeg", "1000040646.jpeg", "1000040647.jpeg", "1000040653.jpeg", "1000040654.jpeg", "1000040658.jpeg", "1000040661.jpeg", "1000040664.jpeg", "1000040666.jpeg", "1000040674.jpeg", "1000040675.jpeg", "1000040676.jpeg", "1000040680.jpeg", "1000040681.jpeg", "1000040682.jpeg", "1000040684.jpeg", "1000040692.jpeg", "1000040700.jpeg", "1000040703.jpeg", "1000040710.jpeg", "1000040714.jpeg", "1000040716.jpeg", "1000040721.jpeg", "1000042477.jpeg", "1000042479.jpeg", "1000042480.jpeg", "1000042481.jpeg", "1000042482.jpeg", "1000042487.jpeg", "1000042488.jpeg", "1000042489.jpeg", "1000042490.jpeg", "1000042492.jpeg", "1000042493.jpeg", "1000042494.jpeg", "1000042495.jpeg", "1000042496.jpeg", "1000045358.png", "1000045359.png", "1000045360.png", "1000045361.png", "1000045362.png", "1000045363.png", "1000045364.png", "1000045365.png", "1000045366.png", "1000045368.png", "1000045369.png", "1000045371.png", "1000045372.png", "1000045373.png", "1000045374.png", "1000045375.png", "1000045376.png", "1000045377.png", "1000045378.png", "1000045379.png", "1000045380.png", "1000045381.png", "1000045383.png", "1000045384.png", "1000045385.png", "1000045386.png", "1000045387.png", "1000045388.png", "1000045389.png", "1000045390.png", "1000045391.png", "1000045392.png", "1000045393.png", "1000045394.png", "1000045395.png", "1000045396.png", "1000045397.png", "1000045398.png", "1000045399.png", "1000045400.png", "1000045401.png", "1000045402.png", "1000045403.png", "1000045404.png", "1000045405.png", "IMG_0954.JPG", "1000038012 (1).jpg", "1000039150 (1).jpg"];
+const catalog=IMAGE_NAMES.map(name=>'/photos/images/'+encodeURIComponent(name));
 const journal=document.getElementById('journal');
-const status=document.getElementById('status');
 const fullscreen=document.getElementById('fullscreen');
-const catalog=IMAGE_NAMES.map(name=>IMAGE_BASE+encodeURIComponent(name));
+const status=document.getElementById('status');
 const dimensions=new Map();
-let queue=[], timer=null, generation=0, lastShown=null;
+let queue=[],lastShown='',timer=null,requestId=0;
+const isMobile=()=>innerWidth<=700;
 const rand=(a,b)=>a+Math.random()*(b-a);
-const mobile=()=>window.innerWidth<=MOBILE_MAX;
-function shuffle(a) {
-  a=[...a];
-  for(let i=a.length-1;i>0;i--) {
-    const j=Math.floor(Math.random()*(i+1));
-    [a[i],a[j]]=[a[j],a[i]];
-  }
+function shuffle(items){
+  const a=items.slice();
+  for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}
   return a;
 }
-function nextFile() {
-  if(!queue.length) {
-    queue=shuffle(catalog);
-    if(queue.length>1 && queue[0]===lastShown) [queue[0],queue[1]]=[queue[1],queue[0]];
-  }
+function nextFile(){
+  if(!queue.length){queue=shuffle(catalog);if(queue.length>1&&queue[0]===lastShown)[queue[0],queue[1]]=[queue[1],queue[0]]}
   return queue.shift();
 }
-function preload(src) {
+function load(src){
   return new Promise((resolve,reject)=>{
     const img=new Image();
-    img.onload=()=>resolve(img);
+    img.onload=()=>resolve({src,orientation:img.naturalWidth>=img.naturalHeight?'horizontal':'vertical'});
     img.onerror=()=>reject(new Error('Image inaccessible : '+src));
     img.src=src;
   });
 }
-async function getDimensions(src) {
-  if(dimensions.has(src)) return dimensions.get(src);
-  const img=await preload(src);
-  const data={orientation:img.naturalWidth>=img.naturalHeight?'horizontal':'vertical'};
-  dimensions.set(src,data);
+async function inspect(src){
+  if(dimensions.has(src))return {src,orientation:dimensions.get(src)};
+  const data=await load(src);
+  dimensions.set(src,data.orientation);
   return data;
 }
-function sizeFactor(double) {
-  if(double) return rand(.90,.98);
+function scaleFor(two){
+  if(two)return rand(.90,.98);
   const r=Math.random();
-  if(r<.01) return rand(.065,.10);
-  if(r<.06) return rand(.22,.40);
-  if(r<.25) return rand(.57,.75);
+  if(r<.01)return rand(.065,.10);
+  if(r<.06)return rand(.22,.40);
+  if(r<.25)return rand(.57,.75);
   return rand(.88,.99);
 }
-function render(sources,scale) {
-  const comp=document.createElement('div');
-  comp.className='composition '+(sources.length===2?'double ':'single ')+(mobile()?'mobile':'desktop');
-  comp.style.width=(scale*100)+'%';
-  comp.style.height=(scale*100)+'%';
-  for(const src of sources) {
-    const slot=document.createElement('div'); slot.className='slot';
-    const img=document.createElement('img'); img.src=src; img.alt=''; img.draggable=false;
-    slot.appendChild(img); comp.appendChild(slot);
-  }
-  journal.replaceChildren(comp);
+function display(sources){
+  const wrap=document.createElement('div');
+  wrap.className='composition '+(sources.length===2?'double ':'single ')+(isMobile()?'mobile':'desktop');
+  const s=scaleFor(sources.length===2);
+  wrap.style.width=s*100+'%';wrap.style.height=s*100+'%';
+  sources.forEach(src=>{
+    const slot=document.createElement('div'),img=document.createElement('img');
+    slot.className='slot';img.src=src;img.alt='';img.draggable=false;
+    slot.appendChild(img);wrap.appendChild(slot);
+  });
+  journal.replaceChildren(wrap);
   status.textContent='';
   lastShown=sources[sources.length-1];
 }
-async function show(token) {
-  const first=nextFile();
-  let firstData;
-  try { firstData=await getDimensions(first); }
-  catch(e) { console.warn(e); if(token===generation) schedule(1000); return; }
-  if(token!==generation) return;
-  const probability=mobile()
-    ? (firstData.orientation==='horizontal'?.25:0)
-    : (firstData.orientation==='vertical'?.20:.15);
-  const chosen=[first];
-  if(Math.random()<probability && catalog.length>1) {
+function schedule(){clearTimeout(timer);timer=setTimeout(advance,10000)}
+async function show(id){
+  let first;
+  for(let attempts=0;attempts<catalog.length;attempts++){
+    const src=nextFile();
+    try{first=await inspect(src);break}
+    catch(e){console.warn(e)}
+    if(id!==requestId)return;
+  }
+  if(id!==requestId)return;
+  if(!first){status.textContent='Impossible de charger les photographies';schedule();return}
+  const chosen=[first.src];
+  const probability=isMobile()?(first.orientation==='horizontal'?.25:0):(first.orientation==='vertical'?.20:.15);
+  if(Math.random()<probability&&catalog.length>1){
     const skipped=[];
-    for(let i=0;i<catalog.length-1;i++) {
+    // Limit extra loads so a slow or missing image never blocks navigation.
+    for(let i=0;i<Math.min(catalog.length-1,8);i++){
       const candidate=nextFile();
-      if(candidate===first) { skipped.push(candidate); continue; }
-      try {
-        const d=await getDimensions(candidate);
-        if(token!==generation) { queue=skipped.concat(candidate,queue); return; }
-        if(d.orientation===firstData.orientation) { chosen.push(candidate); break; }
-      } catch(e) { console.warn(e); }
+      if(candidate===first.src){skipped.push(candidate);continue}
+      try{
+        const data=await inspect(candidate);
+        if(id!==requestId)return;
+        if(data.orientation===first.orientation){chosen.push(candidate);break}
+      }catch(e){console.warn(e)}
       skipped.push(candidate);
     }
     queue=skipped.concat(queue);
   }
-  if(token!==generation) return;
-  render(chosen,sizeFactor(chosen.length===2));
-  schedule(INTERVAL);
+  if(id!==requestId)return;
+  display(chosen);
+  schedule();
 }
-function schedule(ms) { clearTimeout(timer); timer=setTimeout(advance,ms); }
-function advance() {
+function advance(){
   clearTimeout(timer);
-  const token=++generation;
-  show(token).catch(e=>{console.error(e);status.textContent='Erreur de chargement';schedule(2000);});
+  const id=++requestId;
+  show(id).catch(err=>{console.error(err);status.textContent='Erreur de chargement';schedule()});
 }
-// Pointer-up avoids the mobile click highlight/selection flash.
-journal.addEventListener('pointerdown',e=>{
-  if(e.pointerType!=='mouse') e.preventDefault();
-});
-journal.addEventListener('pointerup',e=>{
-  if(e.pointerType==='mouse' && e.button!==0) return;
-  advance();
-});
+journal.addEventListener('click',advance);
+journal.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();advance()}});
 journal.addEventListener('contextmenu',e=>e.preventDefault());
-journal.addEventListener('selectstart',e=>e.preventDefault());
-journal.addEventListener('keydown',e=>{
-  if(e.key==='Enter'||e.key===' ') { e.preventDefault(); advance(); }
-});
+let touchStartX=0,touchStartY=0;
+journal.addEventListener('touchstart',e=>{touchStartX=e.touches[0].clientX;touchStartY=e.touches[0].clientY},{passive:true});
+journal.addEventListener('touchend',e=>{
+  const dx=e.changedTouches[0].clientX-touchStartX;
+  const dy=e.changedTouches[0].clientY-touchStartY;
+  if(Math.abs(dx)>55&&Math.abs(dx)>Math.abs(dy)){e.preventDefault();advance()}
+},{passive:false});
 fullscreen.addEventListener('click',async e=>{
   e.stopPropagation();
-  try {
-    if(document.fullscreenElement) await document.exitFullscreen();
-    else if(document.documentElement.requestFullscreen) await document.documentElement.requestFullscreen();
-    else if(document.documentElement.webkitRequestFullscreen) document.documentElement.webkitRequestFullscreen();
-    else status.textContent='Plein écran indisponible sur ce navigateur';
-  } catch(err) {
-    console.warn(err);
-    status.textContent='Plein écran indisponible sur ce navigateur';
-  }
+  try{
+    if(document.fullscreenElement)await document.exitFullscreen();
+    else if(document.documentElement.requestFullscreen)await document.documentElement.requestFullscreen();
+    else if(document.documentElement.webkitRequestFullscreen)document.documentElement.webkitRequestFullscreen();
+    else status.textContent='Plein écran non disponible sur ce navigateur';
+  }catch(err){console.warn(err);status.textContent='Plein écran non disponible sur ce navigateur'}
 });
 document.addEventListener('fullscreenchange',()=>{
-  fullscreen.setAttribute('aria-label',document.fullscreenElement?'Quitter le plein écran':'Activer le plein écran');
+  const on=Boolean(document.fullscreenElement);
+  fullscreen.setAttribute('aria-label',on?'Quitter le plein écran':'Activer le plein écran');
+  fullscreen.title=on?'Quitter le plein écran':'Plein écran';
 });
-if(!catalog.length) status.textContent='Aucune photographie trouvée';
-else advance();
+window.addEventListener('keydown',e=>{if(e.key==='ArrowRight'){e.preventDefault();advance()}});
+advance();
 })();
 </script>
 </body>
