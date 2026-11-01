@@ -34,103 +34,67 @@ const catalog=IMAGE_NAMES.map(name=>'/photos/images/'+encodeURIComponent(name));
 const journal=document.getElementById('journal');
 const fullscreen=document.getElementById('fullscreen');
 const status=document.getElementById('status');
-const dimensions=new Map();
-let queue=[],lastShown='',timer=null,requestId=0,ready=null,preparing=null,shown=null;
+let queue=[], lastShown='', timer=null, currentToken=0;
 const isMobile=()=>innerWidth<=700;
 const rand=(a,b)=>a+Math.random()*(b-a);
 function shuffle(items){
  const a=items.slice();
- for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a;
+ for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;
 }
 function nextFile(){
- if(!queue.length){queue=shuffle(catalog);if(queue.length>1&&queue[0]===lastShown)[queue[0],queue[1]]=[queue[1],queue[0]]}
+ if(!queue.length){queue=shuffle(catalog);if(queue.length>1&&queue[0]===lastShown)[queue[0],queue[1]]=[queue[1],queue[0]];}
  return queue.shift();
-}
-function load(src){
- return new Promise((resolve,reject)=>{
-  const img=new Image();
-  img.onload=()=>resolve({src,orientation:img.naturalWidth>=img.naturalHeight?'horizontal':'vertical'});
-  img.onerror=()=>reject(new Error('Image inaccessible : '+src));
-  img.src=src;
- });
-}
-async function inspect(src){
- if(dimensions.has(src))return {src,orientation:dimensions.get(src)};
- const data=await load(src);dimensions.set(src,data.orientation);return data;
 }
 function scaleFor(two){
  if(two)return rand(.90,.98);
  const r=Math.random();if(r<.01)return rand(.065,.10);if(r<.06)return rand(.22,.40);
  if(r<.25)return rand(.57,.75);return rand(.88,.99);
 }
-async function makeComposition(){
- let first=null;
- for(let i=0;i<catalog.length;i++){
-  const src=nextFile();
-  try{first=await inspect(src);break}catch(e){console.warn(e)}
- }
- if(!first)throw Error('Aucune image disponible');
- const chosen=[first.src];
- const probability=isMobile()?(first.orientation==='horizontal'?.25:0):(first.orientation==='vertical'?.20:.15);
- if(Math.random()<probability&&catalog.length>1){
-  const skipped=[];
-  for(let i=0;i<Math.min(catalog.length-1,5);i++){
-   const candidate=nextFile();
-   try{
-    const data=await inspect(candidate);
-    if(data.orientation===first.orientation){chosen.push(candidate);break}
-   }catch(e){console.warn(e)}
-   skipped.push(candidate);
-  }
-  queue=skipped.concat(queue);
- }
- return {sources:chosen,scale:scaleFor(chosen.length===2),mobile:isMobile()};
+function makeSlot(src,token,onReady){
+ const slot=document.createElement('div'),img=document.createElement('img');
+ slot.className='slot';img.alt='';img.draggable=false;img.decoding='async';
+ img.addEventListener('load',()=>{if(token===currentToken)onReady(img);},{once:true});
+ img.addEventListener('error',()=>{if(token===currentToken){status.textContent='Une image n’a pas pu être chargée';}},{once:true});
+ slot.appendChild(img);
+ // Start the download only after the visible element has been attached.
+ queueMicrotask(()=>{if(token===currentToken)img.src=src;});
+ return slot;
 }
-function prepare(){
- if(ready)return Promise.resolve(ready);
- if(!preparing){
-  preparing=makeComposition().then(c=>{ready=c;return c}).catch(e=>{
-   console.warn(e);status.textContent='Chargement des photographies impossible';return null;
-  }).finally(()=>{preparing=null});
- }
- return preparing;
-}
-function display(c){
- const wrap=document.createElement('div');
- wrap.className='composition '+(c.sources.length===2?'double ':'single ')+(c.mobile?'mobile':'desktop');
- wrap.style.width=c.scale*100+'%';wrap.style.height=c.scale*100+'%';
- for(const src of c.sources){
-  const slot=document.createElement('div'),img=document.createElement('img');
-  slot.className='slot';img.src=src;img.alt='';img.draggable=false;
-  slot.appendChild(img);wrap.appendChild(slot);
- }
- journal.replaceChildren(wrap);
- status.textContent='';lastShown=c.sources[c.sources.length-1];shown=c;
-}
-function schedule(){clearTimeout(timer);timer=setTimeout(advance,10000)}
 function advance(){
  clearTimeout(timer);
- if(ready){
-  const c=ready;ready=null;
-  display(c);schedule();prepare();
- }else{
-  // Never start competing image loads on repeated clicks.
-  const id=++requestId;
-  prepare().then(c=>{
-   if(id!==requestId||!c)return;
-   if(ready===c)ready=null;
-   display(c);schedule();prepare();
-  });
- }
+ const token=++currentToken;
+ const src=nextFile();lastShown=src;
+ const mobile=isMobile();
+ const wrap=document.createElement('div');
+ wrap.className='composition single '+(mobile?'mobile':'desktop');
+ const scale=scaleFor(false);wrap.style.width=scale*100+'%';wrap.style.height=scale*100+'%';
+ status.textContent='';
+ const first=makeSlot(src,token,img=>{
+   const horizontal=img.naturalWidth>=img.naturalHeight;
+   const probability=mobile?(horizontal?.25:0):(horizontal?.15:.20);
+   if(Math.random()>=probability||catalog.length<2)return;
+   const second=nextFile();
+   const secondSlot=makeSlot(second,token,other=>{
+     const secondHorizontal=other.naturalWidth>=other.naturalHeight;
+     if(secondHorizontal!==horizontal){secondSlot.remove();return;}
+     wrap.className='composition double '+(mobile?'mobile':'desktop');
+     const newScale=scaleFor(true);wrap.style.width=newScale*100+'%';wrap.style.height=newScale*100+'%';
+   });
+   wrap.appendChild(secondSlot);
+ });
+ wrap.appendChild(first);
+ journal.replaceChildren(wrap);
+ // Do not wait for the full-resolution image to finish downloading.
+ timer=setTimeout(advance,10000);
 }
 journal.addEventListener('click',advance);
-journal.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();advance()}});
+journal.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();advance();}});
 journal.addEventListener('contextmenu',e=>e.preventDefault());
 let touchStartX=0,touchStartY=0;
-journal.addEventListener('touchstart',e=>{touchStartX=e.touches[0].clientX;touchStartY=e.touches[0].clientY},{passive:true});
+journal.addEventListener('touchstart',e=>{touchStartX=e.touches[0].clientX;touchStartY=e.touches[0].clientY;},{passive:true});
 journal.addEventListener('touchend',e=>{
  const dx=e.changedTouches[0].clientX-touchStartX,dy=e.changedTouches[0].clientY-touchStartY;
- if(Math.abs(dx)>55&&Math.abs(dx)>Math.abs(dy)){e.preventDefault();advance()}
+ if(Math.abs(dx)>55&&Math.abs(dx)>Math.abs(dy)){e.preventDefault();advance();}
 },{passive:false});
 fullscreen.addEventListener('click',async e=>{
   e.stopPropagation();
